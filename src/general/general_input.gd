@@ -8,6 +8,8 @@ const GAIT_DOWN: StringName = &"general_gait_down"
 const TURN_LEFT: StringName = &"general_turn_left"
 const TURN_RIGHT: StringName = &"general_turn_right"
 const RELEASE_MOUSE: StringName = &"general_release_mouse"
+## Mute / unmute every sound (RiderAudio).
+const MUTE: StringName = &"general_mute"
 
 
 static func ensure_actions() -> void:
@@ -16,6 +18,7 @@ static func ensure_actions() -> void:
 	_add(TURN_LEFT, [KEY_A, KEY_LEFT])
 	_add(TURN_RIGHT, [KEY_D, KEY_RIGHT])
 	_add(RELEASE_MOUSE, [KEY_ESCAPE])
+	_add(MUTE, [KEY_M])
 
 
 static func _add(action: StringName, keys: Array[Key]) -> void:

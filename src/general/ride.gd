@@ -49,6 +49,7 @@ func _ready() -> void:
 	forest.build(woods, field, world_seed)
 	add_child(RideEnvironment.build())
 	_general.woods = woods
+	add_child(RiderAudio.new(_general.motion, AudioBank.load_dir(), world_seed))
 	var start: Vector2 = _vantage_point()
 	_general.position = Vector3(start.x, field.height_at(start.x, start.y) + 0.2, start.y)
 	for spec: Vector3 in FORMATIONS:

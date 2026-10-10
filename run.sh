@@ -25,7 +25,8 @@ Game options (passed through):
   --seconds=N        quit after N seconds
   --screenshot=PATH  save the last frame as PNG (with --seconds)
   -h, --help         show this help
-Keys in game: W/S gait, A/D turn, mouse look, 1/2/3 send an order, Esc mouse.
+Keys in game: W/S gait, A/D turn, mouse look, 1/2/3 send an order, M mute,
+Esc mouse.
 EOF
 }
 
@@ -74,6 +75,8 @@ main() {
         echo "run: C++ sources changed, rebuilding the simulation..."
         "$REPO_ROOT/scripts/build.sh"
     fi
+    # Sound samples are optional (the game runs silent without them).
+    [[ -s "$REPO_ROOT/assets/audio/wind.wav" ]] || "$REPO_ROOT/scripts/fetch_audio.sh" || true
     if scripts_changed; then
         echo "run: scripts changed, refreshing Godot's import cache..."
         godot --headless --path "$REPO_ROOT" --import >/dev/null 2>&1 || true

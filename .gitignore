@@ -17,3 +17,6 @@ gdextension/src/*.o
 # agent worktrees
 .claude/
 gdextension/.sconsign.dblite
+# CC0 sound samples: fetched by scripts/fetch_audio.sh, only the manifest is tracked
+assets/audio/*
+!assets/audio/sources.tsv

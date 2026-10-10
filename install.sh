@@ -3,7 +3,8 @@
 # ============================================================================
 # Install everything legatus needs: Godot 4.7.2, scons + a C++ compiler, the
 # godot-cpp submodule, the Python dev tools (gdlint/gdformat, pre-commit) in
-# .venv, GUT, the compiled simulation GDExtension, git hooks.
+# .venv, GUT, the compiled simulation GDExtension, the CC0 sound samples
+# (scripts/fetch_audio.sh), git hooks.
 # Idempotent; rerun after a pull.
 # ============================================================================
 
@@ -19,6 +20,10 @@ ensure_packages() {
     command -v godot >/dev/null 2>&1 || missing+=(godot)
     command -v scons >/dev/null 2>&1 || missing+=(scons)
     command -v g++ >/dev/null 2>&1 || missing+=(gcc)
+    # Sound samples: download, unpack, slice (scripts/fetch_audio.sh).
+    command -v curl >/dev/null 2>&1 || missing+=(curl)
+    command -v unzip >/dev/null 2>&1 || missing+=(unzip)
+    command -v ffmpeg >/dev/null 2>&1 || missing+=(ffmpeg)
     if [[ ${#missing[@]} -gt 0 ]]; then
         echo "Installing ${missing[*]}..."
         sudo pacman -S --needed --noconfirm "${missing[@]}"
@@ -54,6 +59,7 @@ main() {
     ensure_python_tools
     ensure_gut
     "$REPO_ROOT/scripts/build.sh"
+    "$REPO_ROOT/scripts/fetch_audio.sh" || echo "install: sounds not fetched, the game runs silent" >&2
     godot --headless --path "$REPO_ROOT" --import >/dev/null 2>&1 || true
     if [[ -d "$REPO_ROOT/.git" && -z "${CI:-}" ]]; then
         "$REPO_ROOT/scripts/install_hooks.sh"

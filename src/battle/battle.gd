@@ -53,6 +53,9 @@ func _ready() -> void:
 	_command.name = "Command"
 	add_child(_command)
 	_command.setup(world.sim, world.field, _general, world_seed)
+	var sound: BattleSound = BattleSound.new()
+	add_child(sound)
+	sound.setup(world, _general, _command, world_seed)
 	var order: int = BenchScenario.arg("order", "-1").to_int()
 	if order >= 0:
 		print("order %d sent to formation %d" % [order, _command.send(order, _view())])

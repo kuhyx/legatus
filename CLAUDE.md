@@ -23,6 +23,12 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
   -s res://src/sim/calibrate_morale.gd -- --minutes=15 [--tune=k:v,...]`
   (losses at break / final per side vs the DOCS-design-army §4 targets)
 - build: `scripts/build.sh` (C++ GDExtension -> `bin/`, capped)
+- sounds: `scripts/fetch_audio.sh` (CC0 samples -> ignored `assets/audio/`,
+  sha256-pinned in the tracked `assets/audio/sources.tsv`; install.sh runs it)
+- record with sound (Movie Maker, AVI + PCM): `CAP_CPU_PCT=20 CAP_MEM=4G
+  capped.sh xvfb-run -a -s '-screen 0 640x360x24' godot --rendering-driver vulkan
+  --path . --write-movie $PWD/.shots/ride_audio.avi --fixed-fps 30
+  scenes/battle/battle.tscn -- --seconds=30 --demo-ride --render-size=1280x720`
 - bench-headless: `scripts/bench_headless.sh` (100k sim tick p50/p99, capped)
 - bench: `scripts/bench.sh --offscreen` (fps gate on the real GPU inside Xvfb,
   capped, nothing on kuhy's screen; agents run THIS). Plain `scripts/bench.sh`
@@ -63,6 +69,12 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
   (pool, sim-tick step, seeded RNG) over a `FormationSource` of Callables,
   `CourierSettings` (numbers-table guesses), `OrderPicker`, `OrderInput` (1/2/3),
   `BattleCommand` (the node in battle.gd: keys -> courier, riders in sight).
+- `src/audio/` — sound (`BattleSound` wires it in battle.gd): `AudioBank`
+  (samples; a missing file plays nothing), `RiderAudio` (own hooves on the
+  stride clock via `Footfalls`, saddle creak, snorts, wind ~speed^2, M mutes),
+  `BattleAudio` (16 `DinEmitter`s on the nearest engaged/routed formations,
+  `DinSelect`: distance only, no sight test), `CourierAudio` (hooves <= 300 m).
+  Levels are `AudioTuning` [design guess].
 - `scenes/battle/` — main scene: the general rides around the live battle.
 - `scenes/bench/` — fixed worst-case 100k scenario for both perf gates.
 - `scenes/general/` — ride-around scene for the general (dummy formations).
