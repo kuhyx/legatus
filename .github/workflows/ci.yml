@@ -1,0 +1,51 @@
+name: ci
+
+# Build the C++ GDExtension, lint (warnings-as-errors parse), GUT tests.
+# The shared gates have their own workflows.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: "4.7.2"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.x" }
+
+      - name: Install Godot and scons
+        run: |
+          curl -fsSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q godot.zip
+          sudo mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot
+          rm godot.zip
+          pip install scons
+
+      - name: Check out the shared gates
+        uses: actions/checkout@v4
+        with:
+          repository: kuhyx/utils
+          path: .utils
+
+      - name: Build the GDExtension
+        run: scripts/build.sh
+
+      - name: Install project tooling
+        run: |
+          python -m venv .venv && .venv/bin/pip install -q -r requirements-dev.txt
+          git clone -q --depth 1 --branch v9.7.1 https://github.com/bitwes/Gut /tmp/gut
+          mkdir -p addons && mv /tmp/gut/addons/gut addons/gut
+          godot --headless --path . --import >/dev/null 2>&1 || true
+
+      - name: Lint
+        run: scripts/lint.sh
+
+      - name: Test
+        run: scripts/test.sh

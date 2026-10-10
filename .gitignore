@@ -1,0 +1,16 @@
+# generated / dependencies
+.godot/
+addons/gut/
+.venv/
+__pycache__/
+*.log
+# compiled GDExtension and its objects
+bin/
+gdextension/src/*.os
+gdextension/src/*.o
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+# agent worktrees
+.claude/

@@ -1,0 +1,12 @@
+# Builds the legatus simulation GDExtension into ../bin/. One optimised
+# library serves both the editor (debug) and exported (release) entries in
+# legatus.gdextension: the 100k-soldier benchmark is meaningless unoptimised.
+env = SConscript("godot-cpp/SConstruct")
+env.Append(CPPPATH=["src/"])
+env.Append(CXXFLAGS=["-std=c++17"])
+sources = Glob("src/*.cpp")
+library = env.SharedLibrary(
+    "../bin/liblegatus{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
+    source=sources,
+)
+Default(library)

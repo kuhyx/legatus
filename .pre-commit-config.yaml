@@ -1,0 +1,83 @@
+# Pre-commit hooks for legatus.
+#
+# Install with:  scripts/install_hooks.sh
+# Run manually:  pre-commit run --all-files
+#
+# Only non-mutating checks live here. pre-commit stashes unstaged changes for
+# the duration of the run and restores them with `git apply`; a hook that
+# rewrites a tracked file inside that window makes the restore conflict, which
+# aborts the commit AND drops the developer's uncommitted edit.
+#
+# The four shared gates are `language: system` shims that exec the checker in
+# ~/src/utils, so this repo's idea of a rule cannot drift from every other repo's.
+# fail_fast so a later check cannot run after an earlier one has already
+# rejected the commit.
+fail_fast: true
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: detect-private-key
+
+  - repo: local
+    hooks:
+      # Text only in git: assets are generated or live outside the repo
+      # (install.sh). An image or an archive in a commit is a mistake, not an
+      # asset. Exceptions go in .binary-allowlist.
+      - id: no-binaries
+        name: no binary or image files
+        entry: scripts/check_no_binaries.sh
+        language: system
+        pass_filenames: true
+
+      # The shared 250-line cap. Checks only the files in the commit, so an
+      # unrelated commit never breaks. No baseline, no allowlist -- those are
+      # suppressions. The exemption list lives with the checker in ~/utils.
+      - id: file-length
+        name: file length <= 250 lines
+        entry: scripts/check_file_length.sh
+        language: system
+
+      # Four markdown namespaces (README / CLAUDE* / DOCS* / TODO*), plus the
+      # rule that a TODO carries "REMOVE ME AFTER FINISH" and nothing else may.
+      - id: md-naming
+        name: markdown naming convention
+        entry: scripts/check_md_naming.sh
+        language: system
+        files: \.(md|markdown)$
+
+      # Every dependency on its ecosystem's newest STABLE release, exact-pinned
+      # so the question is mechanically answerable at all.
+      #
+      # `files:` is what keeps this cheap: a commit touching only source makes
+      # ZERO network requests, and manifest commits mostly hit a 6h disk cache.
+      #
+      # Runs WITHOUT --strict on purpose. Offline it degrades to the cached
+      # answer and passes with a loud banner; `--no-verify` is banned here, so
+      # a hook that hard-failed on a flaky connection would leave no way to
+      # commit at all. CI, always online, is the strict authority.
+      - id: dependency-freshness
+        name: dependencies on newest stable
+        entry: scripts/check_dependency_freshness.sh
+        language: system
+        pass_filenames: true
+        files: >-
+          (pubspec\.(yaml|lock)|pyproject\.toml|requirements.*\.txt|uv\.lock
+          |package\.json|package-lock\.json|pnpm-lock\.yaml
+          |Cargo\.(toml|lock)|go\.(mod|sum)
+          |\.fvmrc|\.nvmrc|\.python-version
+          |\.github/workflows/.*\.ya?ml)$
+      - id: repo-contract
+        name: repo contract (CLAUDE.md Commands + test_changed)
+        entry: scripts/check_repo_contract.sh
+        language: system
+        pass_filenames: false
+        files: ^(CLAUDE\.md|AGENTS\.md|scripts/test_changed\.sh)$

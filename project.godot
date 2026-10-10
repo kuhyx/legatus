@@ -1,0 +1,29 @@
+; Engine configuration file.
+; Godot 4.7 project. Forward+ (Vulkan), unlike kuhy's other Godot repos: 100k
+; instanced soldiers need the modern renderer, and the GPU-compute fallback in
+; DOCS-design needs a RenderingDevice. Every GDScript warning is an error and
+; the "unsafe"/"untyped" family is on, so the headless parse in scripts/lint.sh
+; fails on anything the editor would only underline.
+config_version=5
+
+[application]
+config/name="legatus"
+config/features=PackedStringArray("4.7", "Forward Plus")
+
+[debug]
+gdscript/warnings/treat_warnings_as_errors=true
+gdscript/warnings/untyped_declaration=2
+gdscript/warnings/inferred_declaration=2
+gdscript/warnings/unsafe_property_access=2
+gdscript/warnings/unsafe_method_access=2
+gdscript/warnings/unsafe_cast=2
+gdscript/warnings/unsafe_call_argument=2
+gdscript/warnings/return_value_discarded=2
+
+[display]
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/vsync/vsync_mode=0
+
+[rendering]
+renderer/rendering_method="forward_plus"
