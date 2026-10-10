@@ -20,6 +20,7 @@ var _tick_ms: SimStats = SimStats.new()
 var _threads: SimStats = SimStats.new()
 var _draw_ms: SimStats = SimStats.new()
 var _start_alive: int = 0
+var _probe: RenderProbe = RenderProbe.new()
 
 
 func _ready() -> void:
@@ -64,6 +65,7 @@ func _build_world() -> void:
 
 func _process(delta: float) -> void:
 	_elapsed += delta
+	_probe.sample()
 	if _elapsed > WARMUP_SEC:
 		_frame_ms.add(delta * 1000.0)
 	_accum += delta
@@ -104,7 +106,4 @@ func _report() -> void:
 	print(_tick_ms.summary("tick_ms"))
 	print(_threads.summary("threads_per_tick"))
 	print(_draw_ms.summary("fill_upload_ms"))
-	var prims: int = RenderingServer.get_rendering_info(
-		RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME
-	)
-	print("primitives_last_frame=%d" % prims)
+	print(_probe.summary())

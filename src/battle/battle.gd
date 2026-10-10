@@ -24,6 +24,7 @@ var _accum: float = 0.0
 var _hud_timer: float = 0.0
 var _debug_hud: bool = false
 var _frame_ms: SimStats = SimStats.new()
+var _probe: RenderProbe = RenderProbe.new()
 
 @onready var _general: General = $General
 @onready var _hud: Label = $Hud/Status
@@ -76,6 +77,7 @@ func _place_general(at: Vector2) -> void:
 
 func _process(delta: float) -> void:
 	_elapsed += delta
+	_probe.sample()
 	if _elapsed > WARMUP_SEC:
 		_frame_ms.add(delta * 1000.0)
 	_accum += delta
@@ -94,6 +96,7 @@ func _process(delta: float) -> void:
 	if _seconds > 0.0 and _elapsed >= _seconds:
 		_report("end")
 		print(_frame_ms.summary("frame_ms"))
+		print(_probe.summary())
 		_save_screenshot(BenchScenario.arg("screenshot", ""))
 		get_tree().quit()
 
