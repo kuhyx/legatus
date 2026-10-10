@@ -23,6 +23,18 @@ static func bounds() -> AABB:
 	return AABB(Vector3(-half, -1.0, -200.0), Vector3(half * 2.0, 4.0, 400.0))
 
 
+## `--render-size=WxH`: render the scene at WxH whatever the window size
+## (viewport stretch). Offscreen benches run a tiny Xvfb window so copying
+## frames to the software X server costs nothing, while the GPU still renders
+## full resolution. No-op without the arg.
+static func apply_render_size(root: Window) -> void:
+	var parts: PackedStringArray = arg("render-size", "").split("x")
+	if parts.size() != 2:
+		return
+	root.content_scale_mode = Window.CONTENT_SCALE_MODE_VIEWPORT
+	root.content_scale_size = Vector2i(parts[0].to_int(), parts[1].to_int())
+
+
 ## Value of a `--name=value` user arg (after `--`), or `fallback`.
 static func arg(name: String, fallback: String) -> String:
 	for a: String in OS.get_cmdline_user_args():

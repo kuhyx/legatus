@@ -32,6 +32,8 @@ var _probe: RenderProbe = RenderProbe.new()
 
 func _ready() -> void:
 	_seconds = BenchScenario.arg("seconds", "0").to_float()
+	BenchScenario.apply_render_size(get_tree().root)
+	_probe.watch(get_viewport())
 	_debug_hud = BenchScenario.arg("debug", "false") == "true"
 	# A timed run is a measurement: the view must not follow a stray mouse.
 	_general.controls_enabled = _seconds <= 0.0
@@ -79,7 +81,7 @@ func _place_general(at: Vector2) -> void:
 
 func _process(delta: float) -> void:
 	_elapsed += delta
-	_probe.sample()
+	_probe.sample(_elapsed > WARMUP_SEC)
 	if _elapsed > WARMUP_SEC:
 		_frame_ms.add(delta * 1000.0)
 	_accum += delta

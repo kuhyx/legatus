@@ -16,7 +16,9 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
   --seconds=4 --screenshot=$PWD/.shots/general_view.png` (`.shots/` is ignored)
 - build: `scripts/build.sh` (C++ GDExtension -> `bin/`, capped)
 - bench-headless: `scripts/bench_headless.sh` (100k sim tick p50/p99, capped)
-- bench: `scripts/bench.sh` (windowed fps; kuhy runs it, never an agent)
+- bench: `scripts/bench.sh --offscreen` (fps gate on the real GPU inside Xvfb,
+  capped, nothing on kuhy's screen; agents run THIS). Plain `scripts/bench.sh`
+  opens a real window and is kuhy's only. Frames land in `.shots/bench_*.png`.
 - test: `scripts/test.sh`
 - test-changed: `scripts/test_changed.sh`
 - lint: `scripts/lint.sh`
@@ -33,8 +35,9 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
 - Rebuild (`scripts/build.sh`) after any C++ change before running Godot.
 - After adding a `class_name` script run `godot --headless --path . --import`.
 - Never open a window on the live display. Headless runs and builds go
-  through `~/.claude/scripts/capped.sh`; the windowed fps bench
-  (`scripts/bench.sh`) is run by kuhy, never by an agent.
+  through `~/.claude/scripts/capped.sh`. Forward+ renders on the RTX 3090
+  inside Xvfb (`--rendering-driver vulkan`); keep that window tiny and use
+  `--render-size=1920x1080`, or copying frames to Xvfb dominates timings.
 
 ## Layout
 

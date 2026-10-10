@@ -6,15 +6,13 @@ State at hand-off (2026-10-10): Parts 1–3 + integration are committed on
 `main`, pushed to github.com/kuhyx/legatus. `scripts/check.sh` is all green (43/43 tests).
 Headless 100k worst case: tick p50 4.3 ms, p99 6.3 ms (under the 20 % cap).
 
-## Blocking on kuhy first
+## Status
 
-- Windowed fps gate (gate 2) has never run: `! ~/src/legatus/scripts/bench.sh`
-  (opens a window, 2 x 30 s: bench.tscn then battle.tscn; exits 1 if either
-  frame p99 > 16.7 ms). First Forward+ render ever: all visual checks so far
-  were Compatibility on llvmpipe. Headless+capped battle frame p99 was 35 ms
-  (not representative, but hints at the sync-tick spike).
-  If it misses: async/triple-buffered tick (sync tick costs ~3–5 ms every
-  third frame), compact LOD uploads (~12.8 MB/frame today), then GPU path.
+- Gate 2 passed (2026-10-10). kuhy's real window: frame p99 3.22 ms (bench) /
+  3.70 ms (battle). Offscreen (`scripts/bench.sh --offscreen`, 20 % CPU cap):
+  5.85 / 7.09 ms, GPU ~2.5 ms. Agents rerun the offscreen gate themselves.
+- Terrain is far too pale/washed out in Forward+ too (not just llvmpipe):
+  fix ground material / exposure / fog before judging visuals.
 - Design questions: answered, see `DOCS-design.md` "Decisions".
 
 ## Part 4 scope (from DOCS-design-command.md / -army.md)

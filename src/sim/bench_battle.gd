@@ -25,6 +25,8 @@ var _probe: RenderProbe = RenderProbe.new()
 
 func _ready() -> void:
 	_seconds = BenchScenario.arg("seconds", "30").to_float()
+	BenchScenario.apply_render_size(get_tree().root)
+	_probe.watch(get_viewport())
 	_sim = BenchScenario.create()
 	_start_alive = _sim.get_alive(0) + _sim.get_alive(1)
 	_build_world()
@@ -65,7 +67,7 @@ func _build_world() -> void:
 
 func _process(delta: float) -> void:
 	_elapsed += delta
-	_probe.sample()
+	_probe.sample(_elapsed > WARMUP_SEC)
 	if _elapsed > WARMUP_SEC:
 		_frame_ms.add(delta * 1000.0)
 	_accum += delta
