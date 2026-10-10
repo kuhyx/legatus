@@ -86,3 +86,17 @@ func test_neck_range_is_limited() -> void:
 	general.look(-20.0, -20.0)
 	assert_eq(general.neck_yaw, -GaitTable.NECK_YAW_LIMIT_RAD)
 	assert_eq(general.neck_pitch, GaitTable.NECK_PITCH_DOWN_RAD)
+
+
+func test_disabled_controls_ignore_input() -> void:
+	var scene: PackedScene = load(GENERAL_SCENE)
+	var general: General = add_child_autofree(scene.instantiate())
+	var press: InputEventAction = InputEventAction.new()
+	press.action = GeneralInput.GAIT_UP
+	press.pressed = true
+	general.controls_enabled = false
+	general._unhandled_input(press)
+	assert_eq(general.motion.gait, GaitTable.HALT)
+	general.controls_enabled = true
+	general._unhandled_input(press)
+	assert_eq(general.motion.gait, GaitTable.HALT + 1)

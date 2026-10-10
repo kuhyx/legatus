@@ -33,6 +33,8 @@ var _probe: RenderProbe = RenderProbe.new()
 func _ready() -> void:
 	_seconds = BenchScenario.arg("seconds", "0").to_float()
 	_debug_hud = BenchScenario.arg("debug", "false") == "true"
+	# A timed run is a measurement: the view must not follow a stray mouse.
+	_general.controls_enabled = _seconds <= 0.0
 	world = BattleWorld.build(world_seed, BenchScenario.PER_SIDE)
 	_build_scenery()
 	_place_general(_start_position())
@@ -135,11 +137,16 @@ func _report(label: String) -> void:
 	var sim: BattleSim = world.sim
 	print(
 		(
-			"battle %s: t=%.1fs eye=%s drawn=%d in_sight=%d alive=%d tiles=%d/%d sweep_ms=%.2f"
+			(
+				"battle %s: t=%.1fs eye=%s look=%.0f/%.0f deg drawn=%d in_sight=%d"
+				+ " alive=%d tiles=%d/%d sweep_ms=%.2f"
+			)
 			% [
 				label,
 				_elapsed,
 				_general.eye_position().snapped(Vector3.ONE * 0.1),
+				rad_to_deg(_general.neck_yaw),
+				rad_to_deg(_general.neck_pitch),
 				sim.get_drawn_count(0) + sim.get_drawn_count(1),
 				_in_sight(),
 				_alive(),

@@ -19,6 +19,10 @@ var motion: HorseMotion = HorseMotion.new()
 var woods: Woods = null
 var neck_yaw: float = 0.0
 var neck_pitch: float = 0.0
+## False for timed bench runs: no mouse capture, no keys, no mouse-look, so the
+## measured view is fixed (kuhy's first battle bench screenshot was all sky).
+var controls_enabled: bool = true:
+	set = set_controls_enabled
 
 @onready var _neck: Node3D = $Neck
 @onready var _camera: Camera3D = $Neck/Camera
@@ -42,7 +46,15 @@ func camera() -> Camera3D:
 	return _camera
 
 
+func set_controls_enabled(enabled: bool) -> void:
+	controls_enabled = enabled
+	if not enabled and DisplayServer.get_name() != "headless":
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
 func _unhandled_input(event: InputEvent) -> void:
+	if not controls_enabled:
+		return
 	if event.is_action_pressed(GeneralInput.GAIT_UP) and motion.shift_up():
 		gait_changed.emit(motion.gait)
 	elif event.is_action_pressed(GeneralInput.GAIT_DOWN) and motion.shift_down():
@@ -67,8 +79,11 @@ func look(yaw_delta: float, pitch_delta: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	var turn: float = Input.get_axis(GeneralInput.TURN_RIGHT, GeneralInput.TURN_LEFT)
-	var reining: bool = Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+	var turn: float = 0.0
+	var reining: bool = false
+	if controls_enabled:
+		turn = Input.get_axis(GeneralInput.TURN_RIGHT, GeneralInput.TURN_LEFT)
+		reining = Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
 	if reining:
 		turn = clampf(turn + neck_yaw * REIN_GAIN, -1.0, 1.0)
 	if woods != null and motion.gait > GaitTable.TROT and woods.contains(position.x, position.z):
