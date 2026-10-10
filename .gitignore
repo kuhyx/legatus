@@ -12,6 +12,8 @@ gdextension/src/*.o
 .DS_Store
 .vscode/
 .idea/
+# headless screenshots (scenes take --screenshot=PATH)
+.shots/
 # agent worktrees
 .claude/
 gdextension/.sconsign.dblite

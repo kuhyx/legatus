@@ -81,6 +81,34 @@ func height_at(x: float, z: float) -> float:
 	return lerpf(row0, row1, fz)
 
 
+## Mean sample height inside an XZ rectangle (0 if no sample falls in it).
+func mean_height(area: Rect2) -> float:
+	var total: float = 0.0
+	var count: int = 0
+	for z: int in resolution:
+		for x: int in resolution:
+			if area.has_point(sample_position(x, z)):
+				total += get_sample(x, z)
+				count += 1
+	return total / float(count) if count > 0 else 0.0
+
+
+## Level an XZ rectangle to `height` (a battle plain) and ease back to the
+## original relief over `blend` metres outside it with a smoothstep, so the
+## plain's edge has no cliff. Samples further out are untouched.
+func flatten_rect(area: Rect2, height: float, blend: float) -> void:
+	var values: PackedFloat32Array = heights
+	for z: int in resolution:
+		for x: int in resolution:
+			var p: Vector2 = sample_position(x, z)
+			var dx: float = maxf(maxf(area.position.x - p.x, p.x - area.end.x), 0.0)
+			var dz: float = maxf(maxf(area.position.y - p.y, p.y - area.end.y), 0.0)
+			var keep: float = smoothstep(0.0, maxf(blend, 1e-3), Vector2(dx, dz).length())
+			var i: int = z * resolution + x
+			values[i] = lerpf(height, values[i], keep)
+	heights = values
+
+
 ## Surface normal from central differences (for the render mesh).
 func normal_at_sample(x_index: int, z_index: int) -> Vector3:
 	var dx: float = get_sample(x_index + 1, z_index) - get_sample(x_index - 1, z_index)

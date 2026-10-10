@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/battle/battle.gd" id="1_battle"]
+[ext_resource type="PackedScene" path="res://scenes/general/general.tscn" id="2_general"]
+
+[node name="Battle" type="Node3D"]
+script = ExtResource("1_battle")
+
+[node name="General" parent="." instance=ExtResource("2_general")]
+
+[node name="Hud" type="CanvasLayer" parent="."]
+
+[node name="Status" type="Label" parent="Hud"]
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 600.0
+offset_bottom = 70.0
+text = "gait: halt"

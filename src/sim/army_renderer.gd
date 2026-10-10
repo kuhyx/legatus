@@ -4,6 +4,7 @@ extends Node3D
 ## refilled from BattleSim each frame (interpolated between the last two
 ## ticks). With `near_distance` > 0 each side gets two MultiMeshes: the full
 ## soldier within that radius of the camera, the 24-triangle stand-in beyond.
+## Only soldiers BattleSim draws (outside hidden sight tiles) are counted.
 ## Shadows are off for the crowd (spike); terrain still receives sun shadows.
 
 const TINTS: Array[Color] = [Color(0.62, 0.1, 0.08), Color(0.16, 0.26, 0.55)]
@@ -54,7 +55,8 @@ func draw(alpha: float, camera_pos: Vector3) -> void:
 		var far_mm: RID = _multimeshes[side * 2 + 1]
 		if near_distance <= 0.0:
 			RenderingServer.multimesh_set_buffer(near_mm, _sim.fill_transforms(side, alpha))
-			RenderingServer.multimesh_set_visible_instances(near_mm, -1)
+			RenderingServer.multimesh_set_visible_instances(near_mm, _sim.get_drawn_count(side))
+			RenderingServer.multimesh_set_visible_instances(far_mm, 0)
 			continue
 		var near: int = _sim.fill_lod(side, alpha, camera_pos, near_distance)
 		RenderingServer.multimesh_set_buffer(near_mm, _sim.get_lod_buffer(side, 0))

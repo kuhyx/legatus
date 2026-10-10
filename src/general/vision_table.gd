@@ -32,4 +32,7 @@ const DUST_EXTINCTION_M: float = 120.0
 ## last END_CLEARANCE_M before the target are not sampled (its own ground).
 const TERRAIN_TOLERANCE_M: float = 0.1
 const END_CLEARANCE_M: float = 2.0
+## A soldier counts as seen if a point this high above his ground is: about
+## head height, so a crest that hides his feet but not his head shows him.
+const TARGET_HEIGHT_M: float = 1.7
 const EARTH_RADIUS_M: float = 6371000.0

@@ -38,6 +38,7 @@ void BattleSim::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_search_cells", "cells"), &BattleSim::set_search_cells);
 	ClassDB::bind_method(D_METHOD("get_search_cells"), &BattleSim::get_search_cells);
 	BIND_CONSTANT(STRIDE);
+	_bind_view_methods();
 }
 
 void BattleSim::setup_lines(int32_t p_per_side, float p_frontage, float p_gap, int64_t p_seed) {
