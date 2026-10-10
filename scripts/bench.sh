@@ -36,7 +36,7 @@ godot_cmd() {
     if [[ "$OFFSCREEN" == true ]]; then
         CAP_CPU_PCT=20 CAP_MEM=4G "$CAPPED" "${watchdog[@]}" \
             xvfb-run -a -s '-screen 0 1920x1080x24' \
-            godot --rendering-driver vulkan --gpu-index 0 --resolution 96x54 "$@" \
+            godot --rendering-driver vulkan --audio-driver Dummy --gpu-index 0 --resolution 96x54 "$@" \
             --render-size=1920x1080
     else
         "${watchdog[@]}" godot "$@"

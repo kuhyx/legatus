@@ -35,6 +35,11 @@ extends Resource
 @export var pool_size: int = 8
 ## The rider reins in this close to the formation centre (or the general).
 @export var arrival_radius_m: float = 15.0
+## An officer ignores an order from a junior courier with no token: each
+## officer's chance is drawn uniformly in [ignore_min, ignore_max] at setup
+## (numbers table "Order ignored", Officers) [design guess].
+@export var ignore_min: float = 0.10
+@export var ignore_max: float = 0.25
 
 
 func speed_mps() -> float:
@@ -60,6 +65,19 @@ func loss_chance(from: Vector2, to: Vector2, source: FormationSource, own_side: 
 	elif near:
 		survive *= 1.0 - clampf(loss_near_enemy, 0.0, 1.0)
 	return clampf(1.0 - survive, 0.0, 1.0)
+
+
+## How far along the route from `from` to `to` the rider is lost, in metres
+## ridden, or -1 if he gets through: one roll against `chance`, then the loss
+## point. Always both draws, in this order, so a run replays from its seed.
+func sample_loss_point(
+	from: Vector2, to: Vector2, chance: float, rng: RandomNumberGenerator
+) -> float:
+	var roll: float = rng.randf()
+	var point: float = rng.randf()
+	if chance < 1.0 and roll >= chance:
+		return -1.0
+	return point * maxf(from.distance_to(to) - arrival_radius_m, 0.0)
 
 
 ## Uniform handoff duration in [handoff_min_s, handoff_max_s].

@@ -7,6 +7,9 @@ var centres: Array[Vector2] = []
 var sides: Array[int] = []
 var routed: Array[bool] = []
 var engaged: Array[bool] = []
+## For ReportService: per-formation cohesion and current order.
+var cohesions: Array[float] = []
+var orders: Array[int] = []
 var general: Vector2 = Vector2.ZERO
 ## (formation, order) per delivered order, in delivery order.
 var deliveries: Array[Vector2i] = []
@@ -18,6 +21,8 @@ func add(centre: Vector2, side: int) -> void:
 	sides.append(side)
 	routed.append(false)
 	engaged.append(false)
+	cohesions.append(1.0)
+	orders.append(OrderInput.HOLD)
 
 
 func source() -> FormationSource:
@@ -29,6 +34,8 @@ func source() -> FormationSource:
 	s.count = _count
 	s.deliver = _deliver
 	s.general_position = _general
+	s.cohesion = _cohesion
+	s.current_order = _order
 	s.keep_alive = self
 	return s
 
@@ -59,3 +66,11 @@ func _deliver(f: int, order: int) -> void:
 
 func _general() -> Vector2:
 	return general
+
+
+func _cohesion(f: int) -> float:
+	return cohesions[f]
+
+
+func _order(f: int) -> int:
+	return orders[f]

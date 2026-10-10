@@ -7,7 +7,8 @@ extends Node3D
 ## `--seconds=N` quit after N s (default: never), `--screenshot=PATH` save the
 ## last frame as PNG, `--eye=X,Z` start the general there, not on the vantage,
 ## `--order=N` send order N (0 advance, 1 hold, 2 withdraw) at start to the
-## formation in view (or to formation F with `--order-to=F`), `--debug` show
+## formation in view (or to formation F with `--order-to=F`; at sim second S
+## with `--order-at=S`, default 0; comma lists send several), `--debug` show
 ## soldier counts on the HUD (a real general has no such readout),
 ## `--demo-ride` ride the scripted DemoRide (recordings).
 
@@ -25,6 +26,10 @@ var _command: BattleCommand = null
 var _enemy: EnemyPlan = null
 var _log: FormationLog = null
 var _seconds: float = 0.0
+## Sim seconds so far; the `--order` list and the next one not yet sent.
+var _sim_s: float = 0.0
+var _orders: PackedStringArray = PackedStringArray()
+var _next_order: int = 0
 var _elapsed: float = 0.0
 var _accum: float = 0.0
 var _hud_timer: float = 0.0
@@ -61,12 +66,8 @@ func _ready() -> void:
 	var sound: BattleSound = BattleSound.new()
 	add_child(sound)
 	sound.setup(world, _general, _command, world_seed)
-	var order: int = BenchScenario.arg("order", "-1").to_int()
-	var order_to: int = BenchScenario.arg("order-to", "-1").to_int()
-	if order >= 0 and order_to >= 0:
-		print("order %d sent to formation %d" % [order, _command.send_to(order, order_to)])
-	elif order >= 0:
-		print("order %d sent to formation %d" % [order, _command.send(order, _view())])
+	_orders = BenchScenario.arg("order", "").split(",", false)
+	_send_order_due()
 	# One synchronous sweep so the first frame is already culled.
 	_sight = BattleSight.new(world.sim)
 	var tiles: int = _sight.full_sweep(_general.eye_position())
@@ -102,6 +103,23 @@ func _view() -> Transform3D:
 	return _general.camera().global_transform
 
 
+## Each `--order` once its `--order-at` sim time has come, in list order.
+func _send_order_due() -> void:
+	var to: PackedStringArray = BenchScenario.arg("order-to", "").split(",", false)
+	var at: PackedStringArray = BenchScenario.arg("order-at", "").split(",", false)
+	while _next_order < _orders.size():
+		var i: int = _next_order
+		if i < at.size() and _sim_s < at[i].to_float():
+			return
+		_next_order += 1
+		var order: int = _orders[i].to_int()
+		var target: int = to[i].to_int() if i < to.size() else -1
+		var sent: int = (
+			_command.send_to(order, target) if target >= 0 else _command.send(order, _view())
+		)
+		print("order %d sent to formation %d at %.1f s" % [order, sent, _sim_s])
+
+
 func _place_general(at: Vector2) -> void:
 	_general.position = Vector3(at.x, world.field.height_at(at.x, at.y) + 0.2, at.y)
 	_general.motion.heading = PI
@@ -120,6 +138,8 @@ func _process(delta: float) -> void:
 		_command.tick(BenchScenario.TICK_DT)
 		_enemy.tick(BenchScenario.TICK_DT)
 		_log.tick(BenchScenario.TICK_DT)
+		_sim_s += BenchScenario.TICK_DT
+		_send_order_due()
 		_accum -= BenchScenario.TICK_DT
 		steps += 1
 	_accum = minf(_accum, BenchScenario.TICK_DT)
@@ -154,20 +174,10 @@ func _alive() -> int:
 
 
 func _update_hud() -> void:
-	var motion: HorseMotion = _general.motion
-	_hud.text = (
-		"gait: %s  speed: %.1f m/s  stamina: %d%%%s"
-		% [
-			GaitTable.GAIT_NAMES[motion.gait],
-			motion.speed,
-			roundi(motion.stamina * 100.0),
-			"  (blown)" if motion.exhausted else "",
-		]
-	)
-	if not _command.note.is_empty():
-		_hud.text += "\n" + _command.note
+	var debug: String = ""
 	if _debug_hud:
-		_hud.text += "\n[debug] soldiers in sight: %d / alive %d" % [_in_sight(), _alive()]
+		debug = "[debug] soldiers in sight: %d / alive %d" % [_in_sight(), _alive()]
+	_hud.text = BattleHud.compose(_general.motion, _command, debug)
 
 
 func _report(label: String) -> void:

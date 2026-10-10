@@ -1,14 +1,13 @@
-# TODO: Part 5b and later — reports, officers, enemy plan, signals
+# TODO: after Part 5b — enemy plan, signals, initiative, calibration
 
 REMOVE ME AFTER FINISH
 
-State at hand-off (2026-10-10): Part 5a is committed on `main`, not pushed
-until kuhy confirms. `scripts/check.sh` all green (127/127 tests). Headless
-100k: tick p50 4.56 ms, p99 6.09 ms. Offscreen fps gate: bench 5.85 ms /
-battle 8.33 ms frame p99 (battle was 7.1: all 100k now in sight at start).
-The battle gate's 30 s window now ends before contact (~159 s); 300 s live
-runs with contact: frame p99 10.4 / 14.3 ms. Extend the window or add a
-contact scenario.
+State at hand-off (2026-10-10): Parts 5a and 5b are committed on `main`, not
+pushed until kuhy confirms. `scripts/check.sh` all green (155/155 tests).
+Offscreen fps gate: bench 6.06 ms / battle 9.09 ms frame p99. The battle
+gate's 30 s window ends before contact (~159 s); a 480 s live run with
+contact (tiny-window flags): frame p50 7.58 / p99 9.26 ms. Extend the
+window or add a contact scenario.
 
 ## Done in Part 5a
 
@@ -23,14 +22,6 @@ contact scenario.
   ~200 ms -> ~2 ms a tick). Formation pass is two-sweep (order-independent);
   that was NOT the side-0 bias (below).
 - `--order-to=F`, `--verbose` `formations:` log.
-
-## Part 5b (agreed scope, needs its own question round first)
-
-- Officer order-ignored roll (10-25 %, numbers table) on courier delivery:
-  no seniority model yet, so how the probability is chosen is open.
-- Reports back by courier (DOCS-design-perception.md §4): what an officer
-  reports, how often, morale bias; "no acknowledgement came back" for lost
-  couriers — when the absence counts as noticed.
 
 ## Later
 
@@ -71,3 +62,26 @@ contact scenario.
 - Visibility is per 25 m tile centre; soldiers do not occlude each other.
 - godot-cpp pin (`godot-4.5-stable`) is NOT checked by the dep-freshness gate
   (it has no submodule support); checked by hand against the tag list 2026-10-10.
+
+## Done in Part 5b (2026-10-10)
+
+- Officers: per-officer ignore chance 10-25 % (seeded), each roll from its
+  own stream (seed, formation, orders so far); an ignored order is still
+  acknowledged. OrderLog on the HUD: sent / acknowledged hh:mm / found them
+  broken hh:mm; a lost order stays "sent".
+- Reports by rider (ReportService): on a change of the true level, max 1 per
+  block per 60 s, leaving the block's rear (60 m standoff: ~15 % loss near the
+  enemy instead of ~50 % from inside the melee), 16 riders, a report past
+  the cap waits (re-read at dispatch, never dropped). Morale bias is a seeded
+  roll per report, chance (0.5 - cohesion) / 0.5.
+- `--order-at=S`, comma lists for `--order` / `--order-to` / `--order-at`.
+- Agent runs are muted (`--audio-driver Dummy`); the CLAUDE.md screenshot
+  command now uses the bench's tiny-window flags (the 640x360 window cost
+  ~50 ms a frame in Xvfb copies).
+
+## Part 5b follow-ups
+
+- Report wording is levels only; DOCS-design-perception §4 also wants
+  unit names ("Legio II") once formations have them.
+- An order that changes nothing (hold to a holding block) still rolls the
+  ignore chance and prints IGNORED in the verbose log.

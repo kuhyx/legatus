@@ -14,11 +14,16 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
   Plain `godot --path .` (main scene `scenes/battle/battle.tscn`; user args after
   `--`: `--seconds=N`, `--screenshot=PATH`, `--eye=X,Z`, `--debug`,
   `--order=N` send 0 advance / 1 hold / 2 withdraw at start to the block in
-  view, `--order-to=F` to block F instead; add `--verbose` for the
-  `couriers:` / `orders:` / `formations:` log)
-- screenshot (off the live display, Forward+): `capped.sh xvfb-run -a -s '-screen 0 640x360x24'
-  godot --rendering-driver vulkan --path . scenes/battle/battle.tscn --
+  view, `--order-to=F` to block F instead, `--order-at=S` at sim second S;
+  comma lists send several, e.g. `--order=2,1 --order-to=11,15
+  --order-at=0,200`; add `--verbose` for the `couriers:` / `orders:` /
+  `reports:` / `formations:` log)
+- screenshot (off the live display, Forward+, muted: agent runs ALWAYS pass
+  `--audio-driver Dummy`, kuhy hears them otherwise): `capped.sh xvfb-run -a -s
+  '-screen 0 1920x1080x24' godot --rendering-driver vulkan --audio-driver Dummy
+  --gpu-index 0 --resolution 96x54 --path . scenes/battle/battle.tscn --
   --seconds=4 --render-size=1920x1080 --screenshot=$PWD/.shots/general_view.png`
+  (a bigger window costs ~50 ms a frame in Xvfb copies: no timings from it)
   (`.shots/` is ignored)
 - calibrate morale: `capped.sh godot --headless --audio-driver Dummy --path .
   -s res://src/sim/calibrate_morale.gd -- --minutes=15 [--tune=k:v,...]`
@@ -72,7 +77,11 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
   (pool, sim-tick step, seeded RNG) over a `FormationSource` of Callables,
   `CourierSettings` (numbers-table guesses), `OrderPicker`, `OrderInput` (1/2/3),
   `BattleCommand` (the node in battle.gd: keys -> courier, riders in sight),
-  `EnemyPlan` (placeholder: the enemy front line advances at 60 s).
+  `Officers` (per-officer ignore chance, own seeded roll stream), `OrderLog`
+  (HUD orders: sent / acknowledged / found them broken), `ReportService` +
+  `ReportRider` + `ReportLevel` (officers' reports by rider, morale bias),
+  `RiderView`, `BattleClock` (08:00 + sim time), `EnemyPlan` (placeholder:
+  the enemy front line advances at 60 s). `src/battle/battle_hud.gd` draws it.
 - `src/audio/` — sound (`BattleSound` wires it in battle.gd): `AudioBank`
   (samples; a missing file plays nothing), `RiderAudio` (own hooves on the
   stride clock via `Footfalls`, saddle creak, snorts, wind ~speed^2, M mutes),

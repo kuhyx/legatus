@@ -5,27 +5,33 @@ extends Node3D
 ## at (OrderPicker). Couriers are stepped on the sim tick and drawn as riders,
 ## each only while the general could see it (same sight test as soldiers).
 ## Engaged formations take only hold or withdraw (DOCS-design-command.md §3):
-## an "advance" reaching a unit already in melee changes nothing.
+## an "advance" reaching a unit already in melee changes nothing. An order
+## that does apply may still be ignored by the officer (Officers). The
+## couriers' returns fill `orders`; the officers' riders bring `reports`.
 
 ## How long the HUD keeps the "courier sent" line, s.
 const NOTE_S: float = 4.0
 const ORDER_NAMES: PackedStringArray = ["advance", "hold", "withdraw"]
-const HORSE_SIZE: Vector3 = Vector3(0.5, 1.0, 2.2)
-const RIDER_SIZE: Vector3 = Vector3(0.45, 0.9, 0.35)
+const COURIER_CLOAK: Color = Color(0.55, 0.1, 0.08)
+## Officers' riders wear a dark blue cloak [design].
+const REPORT_CLOAK: Color = Color(0.12, 0.16, 0.42)
 
 var service: CourierService = null
+var officers: Officers = null
+var reports: ReportService = null
+## The orders the general sent and what came back (HUD).
+var orders: OrderLog = OrderLog.new()
+## Sim seconds since the battle began (the HUD clock).
+var time_s: float = 0.0
 ## Short player-facing line ("courier sent ..."), empty when nothing new.
 var note: String = ""
 var _sim: BattleSim = null
-var _field: HeightField = null
 var _general: General = null
-var _riders: Array[Node3D] = []
 var _note_left: float = 0.0
 
 
 func setup(sim: BattleSim, field: HeightField, general: General, rng_seed: int) -> void:
 	_sim = sim
-	_field = field
 	_general = general
 	OrderInput.ensure_actions()
 	var source: FormationSource = FormationSource.new()
@@ -34,43 +40,52 @@ func setup(sim: BattleSim, field: HeightField, general: General, rng_seed: int) 
 	source.routed = sim.is_formation_routed
 	source.engaged = sim.is_formation_engaged
 	source.count = sim.get_formation_count
+	source.cohesion = sim.get_formation_cohesion
+	source.current_order = sim.get_formation_order
 	source.deliver = deliver
 	source.general_position = general_xz
 	service = CourierService.new(source, CourierSettings.new(), rng_seed)
-	for _i: int in service.couriers.size():
-		_riders.append(_build_rider())
+	# Own streams: the ignore roll must not track the courier loss roll.
+	officers = Officers.new(sim.get_formation_count(), service.settings, hash([rng_seed, 1]))
+	reports = ReportService.new(source, service.settings, hash([rng_seed, 2]))
+	if (
+		service.order_acknowledged.connect(_on_acknowledged) != OK
+		or service.order_found_broken.connect(_on_found_broken) != OK
+	):
+		push_error("BattleCommand: cannot hear the couriers come back")
+	_add_view("Couriers", service.couriers, COURIER_CLOAK, field)
+	_add_view("ReportRiders", reports.riders, REPORT_CLOAK, field)
 
 
-## One sim tick for every courier (call inside the fixed-tick loop).
+## One sim tick for every courier and report rider (call inside the
+## fixed-tick loop).
 func tick(dt: float) -> void:
+	time_s += dt
 	service.step(dt)
+	reports.step(dt)
+	orders.prune(time_s)
 	_note_left = maxf(0.0, _note_left - dt)
 	if _note_left <= 0.0:
 		note = ""
 
 
-## Where the couriers are drawn this frame; hidden if out of the general's sight.
+## Where the riders are drawn this frame; hidden if out of the general's sight.
 func draw(eye: Vector3) -> void:
-	for i: int in _riders.size():
-		var courier: Courier = service.couriers[i]
-		var rider: Node3D = _riders[i]
-		rider.visible = false
-		if not courier.is_riding():
-			continue
-		var p: Vector2 = courier.position
-		var at: Vector3 = Vector3(p.x, _field.height_at(p.x, p.y), p.y)
-		var head: Vector3 = at + Vector3.UP * VisionTable.TARGET_HEIGHT_M
-		if _sim.sight_factor(eye, head) < VisionTable.VISIBLE_THRESHOLD:
-			continue
-		rider.position = at
-		rider.rotation.y = courier.heading
-		rider.visible = true
+	for child: Node in get_children():
+		var view: RiderView = child as RiderView
+		if view != null:
+			view.draw(eye)
 
 
 ## The order as the formation's officer receives it.
 func deliver(f: int, order: int) -> void:
 	var engaged: bool = _sim.is_formation_engaged(f)
-	if not (order == OrderInput.ADVANCE and engaged):
+	var applies: bool = not (order == OrderInput.ADVANCE and engaged)
+	# Rolled only for an order that would change something.
+	if applies and officers.ignores(f):
+		applies = false
+		print_verbose("orders: %s IGNORED by formation %d's officer" % [ORDER_NAMES[order], f])
+	if applies:
 		_sim.set_formation_order(f, order)
 	print_verbose(
 		(
@@ -128,6 +143,7 @@ func send_to(order: int, target: int) -> int:
 	if not service.dispatch(order, target, general_xz()):
 		_say("no courier free")
 		return -1
+	orders.add(service.last_ticket, target, order, time_s)
 	_say("courier rides to formation %d: %s" % [target, ORDER_NAMES[order]])
 	return target
 
@@ -137,26 +153,25 @@ func _say(text: String) -> void:
 	_note_left = NOTE_S
 
 
-## A horse and rider from two boxes, in the courier's red cloak.
-func _build_rider() -> Node3D:
-	var root: Node3D = Node3D.new()
-	root.name = "Courier"
-	root.visible = false
-	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.albedo_color = Color(0.36, 0.25, 0.17)
-	root.add_child(_box(HORSE_SIZE, Vector3(0.0, 1.0, 0.0), material))
-	var cloak: StandardMaterial3D = StandardMaterial3D.new()
-	cloak.albedo_color = Color(0.55, 0.1, 0.08)
-	root.add_child(_box(RIDER_SIZE, Vector3(0.0, 1.95, 0.0), cloak))
-	add_child(root)
-	return root
+func _on_acknowledged(ticket: int, f: int, order: int) -> void:
+	var listed: bool = orders.answer(ticket, OrderLog.Answer.ACKNOWLEDGED, time_s)
+	print_verbose(
+		"orders: %s to formation %d acknowledged (listed %s)" % [ORDER_NAMES[order], f, listed]
+	)
 
 
-static func _box(size: Vector3, at: Vector3, material: Material) -> MeshInstance3D:
-	var mesh: BoxMesh = BoxMesh.new()
-	mesh.size = size
-	mesh.material = material
-	var instance: MeshInstance3D = MeshInstance3D.new()
-	instance.mesh = mesh
-	instance.position = at
-	return instance
+func _on_found_broken(ticket: int, f: int, order: int) -> void:
+	var listed: bool = orders.answer(ticket, OrderLog.Answer.BROKEN, time_s)
+	print_verbose(
+		(
+			"orders: %s to formation %d: found them broken (listed %s)"
+			% [ORDER_NAMES[order], f, listed]
+		)
+	)
+
+
+func _add_view(view_name: String, riders: Array[Courier], cloak: Color, field: HeightField) -> void:
+	var view: RiderView = RiderView.new()
+	view.name = view_name
+	add_child(view)
+	view.setup(riders, cloak, _sim, field)

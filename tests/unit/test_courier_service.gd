@@ -122,6 +122,37 @@ func test_routed_target_gets_no_order() -> void:
 	assert_eq(service.couriers[0].state, Courier.State.RETURNING, "the rider still rides back")
 
 
+func test_the_courier_back_acknowledges_the_order() -> void:
+	var fake: CourierFake = _world()
+	var settings: CourierSettings = _settings(8)
+	var service: CourierService = CourierService.new(fake.source(), settings, 1)
+	watch_signals(service)
+	assert_true(service.dispatch(OrderInput.HOLD, 0, Vector2.ZERO))
+	var ticket: int = service.last_ticket
+	_run(service, _expected_ticks(settings) + 10)
+	assert_signal_not_emitted(service, "order_acknowledged", "not on handover")
+	_run(service, roundi(DISTANCE_M / settings.speed_mps() / DT))
+	assert_signal_emitted_with_parameters(
+		service, "order_acknowledged", [ticket, 0, OrderInput.HOLD]
+	)
+	assert_signal_not_emitted(service, "order_found_broken")
+
+
+func test_the_courier_back_reports_a_broken_formation() -> void:
+	var fake: CourierFake = _world()
+	var settings: CourierSettings = _settings(8)
+	var service: CourierService = CourierService.new(fake.source(), settings, 1)
+	watch_signals(service)
+	assert_true(service.dispatch(OrderInput.ADVANCE, 0, Vector2.ZERO))
+	var routed: Array[bool] = fake.routed
+	routed[0] = true
+	_run(service, _expected_ticks(settings) + roundi(DISTANCE_M / settings.speed_mps() / DT) + 10)
+	assert_signal_emitted_with_parameters(
+		service, "order_found_broken", [service.last_ticket, 0, OrderInput.ADVANCE]
+	)
+	assert_signal_not_emitted(service, "order_acknowledged")
+
+
 func test_same_seed_same_run() -> void:
 	var a: CourierService = _random_run(99)
 	var b: CourierService = _random_run(99)

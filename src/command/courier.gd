@@ -25,6 +25,11 @@ var travelled_m: float = 0.0
 var lose_after_m: float = -1.0
 ## Seconds of finding and explaining, drawn at dispatch.
 var handoff_s: float = 0.0
+## CourierService's id for this dispatch, kept after the return so the
+## acknowledgement can name the order it answers.
+var ticket: int = -1
+## Set at the handoff: the formation had routed, he rides back with that news.
+var found_broken: bool = false
 var _handoff_left: float = 0.0
 ## HANDOFF: where he stands relative to the (moving) formation centre.
 var _offset: Vector2 = Vector2.ZERO
@@ -36,6 +41,7 @@ func dispatch(f: int, order_id: int, from: Vector2) -> void:
 	order = order_id
 	position = from
 	travelled_m = 0.0
+	found_broken = false
 	state = State.OUTBOUND
 
 
