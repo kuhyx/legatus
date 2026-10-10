@@ -13,8 +13,12 @@ const MOUSE_SENSITIVITY: float = 0.0025
 ## Turn input per radian of head-vs-horse angle while reining by gaze.
 const REIN_GAIN: float = 1.5
 const GRAVITY_MPS2: float = 9.81
+## Near clip, m: the horse's neck and the rider's hands are within a metre.
+const CAMERA_NEAR_M: float = 0.05
 
 var motion: HorseMotion = HorseMotion.new()
+## What the stride does to the rider's view and the visible body.
+var rider_motion: RiderMotion = RiderMotion.new()
 ## Optional: in woods the horse cannot go faster than a trot.
 var woods: Woods = null
 var neck_yaw: float = 0.0
@@ -26,6 +30,7 @@ var controls_enabled: bool = true:
 ## Turn input (-1..1, + = left) used while controls are off, so a scripted
 ## ride (DemoRide) can steer without faking key events.
 var scripted_turn: float = 0.0
+var _body: RiderBody = RiderBody.new()
 
 @onready var _neck: Node3D = $Neck
 @onready var _camera: Camera3D = $Neck/Camera
@@ -35,7 +40,9 @@ func _ready() -> void:
 	GeneralInput.ensure_actions()
 	_neck.position = Vector3(0.0, GaitTable.EYE_HEIGHT_M, 0.0)
 	_camera.position = Vector3.ZERO
+	_camera.near = CAMERA_NEAR_M
 	_camera.far = VisionTable.MAX_DISTANCE_M * 2.0
+	add_child(_body)
 	if DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -47,6 +54,10 @@ func eye_position() -> Vector3:
 
 func camera() -> Camera3D:
 	return _camera
+
+
+func body() -> RiderBody:
+	return _body
 
 
 func set_controls_enabled(enabled: bool) -> void:
@@ -102,8 +113,10 @@ func _physics_process(delta: float) -> void:
 		look(-angle_difference(heading_before, motion.heading), 0.0)
 	_move(delta)
 	rotation.y = motion.heading
-	_camera.position.y = motion.bob_offset()
-	_neck.rotation = Vector3(neck_pitch, neck_yaw, 0.0)
+	rider_motion.twist = neck_yaw * RiderMotionTable.TORSO_TWIST_SHARE
+	rider_motion.step(delta, motion)
+	_body.pose(rider_motion)
+	_neck.transform = rider_motion.eye_transform(neck_pitch, neck_yaw)
 
 
 func _move(delta: float) -> void:
