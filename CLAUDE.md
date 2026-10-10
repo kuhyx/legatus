@@ -9,7 +9,9 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
 
 ## Commands
 
-- run: `godot --path .` (main scene `scenes/battle/battle.tscn`; user args after
+- run: `./run.sh` (installs what is missing, rebuilds changed C++, then
+  `godot --path . -- ARGS`; opens a window: kuhy's only, agents use xvfb-run).
+  Plain `godot --path .` (main scene `scenes/battle/battle.tscn`; user args after
   `--`: `--seconds=N`, `--screenshot=PATH`, `--eye=X,Z`, `--debug`,
   `--order=N` send 0 advance / 1 hold / 2 withdraw at start to the block in
   view; add `--verbose` for the `couriers:` / `orders:` log)

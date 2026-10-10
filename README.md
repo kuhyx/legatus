@@ -7,15 +7,19 @@ and command 50,000 men per side by courier.
 Design: `DOCS-design.md`, from Bret Devereaux's ACOUP series
 "Total Generalship: Commanding Pre-Modern Armies".
 
-## Setup
+## Play
 
-    ./install.sh
+    ./run.sh
+
+Installs whatever is missing (`install.sh`), rebuilds the C++ simulation if
+it changed, and opens the battle. `./run.sh --help` lists the game options.
 
 ## Commands
 
 | What | Command |
 |---|---|
-| Run | `godot --path .` |
+| Run (installs, builds) | `./run.sh` |
+| Install only | `./install.sh` |
 | Build C++ sim | `scripts/build.sh` |
 | Tests | `scripts/test.sh` |
 | Lint | `scripts/lint.sh` |
