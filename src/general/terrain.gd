@@ -6,6 +6,13 @@ extends Node3D
 
 const LOW_COLOR: Color = Color(0.31, 0.42, 0.18)
 const HIGH_COLOR: Color = Color(0.55, 0.5, 0.3)
+const SHADER: Shader = preload("res://src/general/terrain.gdshader")
+## Detail noise: pixels per side, and features per side of the texture.
+const NOISE_SIZE_PX: int = 256
+const NOISE_FREQUENCY: float = 0.06
+
+static var _noise: ImageTexture = null
+static var _noise_mean: float = 0.5
 
 var field: HeightField = null
 
@@ -45,16 +52,36 @@ func _build_mesh() -> ArrayMesh:
 	arrays[Mesh.ARRAY_INDEX] = _build_indices(res)
 	var mesh: ArrayMesh = ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	var material: StandardMaterial3D = StandardMaterial3D.new()
-	material.vertex_color_use_as_albedo = true
-	# LOW_COLOR/HIGH_COLOR are sRGB picks; read as linear they render ~1.5x
-	# brighter and wash out to pale cream under the tonemapper.
-	material.vertex_color_is_srgb = true
-	material.roughness = 1.0
-	# Dry grass is diffuse; the default 0.5 mirrored the pale sky at grazing angles.
-	material.metallic_specular = 0.2
+	# LOW_COLOR/HIGH_COLOR are sRGB picks: the shader converts them (read as
+	# linear they render ~1.5x brighter and wash out to pale cream), keeps the
+	# diffuse look (roughness 1, specular 0.2) and adds near-ground detail.
+	var material: ShaderMaterial = ShaderMaterial.new()
+	material.shader = SHADER
+	material.set_shader_parameter("detail_noise", detail_noise())
+	material.set_shader_parameter("noise_mean", _noise_mean)
 	mesh.surface_set_material(0, material)
 	return mesh
+
+
+## Tileable value noise for the terrain shader's ground detail, made once
+## per run (generated, not a binary file in the repo), with mipmaps so the
+## grain fades instead of shimmering at grazing angles.
+static func detail_noise() -> ImageTexture:
+	if _noise != null:
+		return _noise
+	var noise: FastNoiseLite = FastNoiseLite.new()
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	noise.frequency = NOISE_FREQUENCY
+	noise.fractal_octaves = 3
+	var image: Image = noise.get_seamless_image(NOISE_SIZE_PX, NOISE_SIZE_PX)
+	image.convert(Image.FORMAT_L8)
+	if image.generate_mipmaps() != OK:
+		push_error("Terrain: cannot build detail noise mipmaps")
+	var average: Image = image.duplicate() as Image
+	average.resize(1, 1, Image.INTERPOLATE_TRILINEAR)
+	_noise_mean = average.get_pixel(0, 0).r
+	_noise = ImageTexture.create_from_image(image)
+	return _noise
 
 
 ## Two triangles per cell, wound so the faces point up (+Y).

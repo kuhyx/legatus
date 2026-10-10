@@ -47,8 +47,9 @@ const GALLOP_RESUME_STAMINA: float = 0.3
 ## ~11 km (~30 min), longer than any fight. Gallop entry unused (see above).
 const STAMINA_RATE_PER_S: Array[float] = [0.005, 0.0033, 0.001, 0.0, 0.0]
 
-## Head bob [design guess]: vertical amplitude (m).
-const BOB_AMPLITUDE_M: Array[float] = [0.0, 0.015, 0.05, 0.035, 0.06]
+## Rider bob [design guess]: vertical amplitude (m). DOCS-design.md numbers
+## table, "Rider bob": doubled from Part 4a so movement reads at a walk.
+const BOB_AMPLITUDE_M: Array[float] = [0.0, 0.03, 0.08, 0.06, 0.10]
 
 ## Stride clock [design guess]: full leg cycles per second per gait. One
 ## clock drives the bob, the horse's head nod and the hoof sounds, so they

@@ -2,7 +2,8 @@ class_name DemoRide
 extends Node
 ## A scripted 30 s ride for recordings and screenshots (`--demo-ride`): no one
 ## presses keys inside Xvfb, so this walks the general through every gait, a
-## turn, a look down at the horse and a look back over the rump. Drives only
+## turn, a look down at the horse and a look back over the rump (pitched
+## down 45 deg: at 15 the 75 deg frame passes over the croup). Drives only
 ## General's public state; the general's own controls must be off.
 
 ## (start s, gait, turn -1..1, neck yaw deg, neck pitch deg), in time order.
@@ -15,7 +16,7 @@ const SCHEDULE: Array[Array] = [
 	[16.0, 4, 1.0, 0.0, 0.0],
 	[18.0, 4, 0.0, 0.0, 0.0],
 	[20.0, 3, 0.0, 0.0, -50.0],
-	[23.0, 2, 0.0, 110.0, -15.0],
+	[23.0, 2, 0.0, 110.0, -45.0],
 	[26.0, 1, 0.0, 0.0, 0.0],
 	[28.0, 0, 0.0, 0.0, 0.0],
 ]

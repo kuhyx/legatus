@@ -102,6 +102,13 @@ Conversions (km/h to m/s, miles to km) are mine. Rows labelled [design] or
 | Horse gallop | 40-48 km/h = 11-13 m/s; ACOUP uses ~40 km/h | https://en.wikipedia.org/wiki/Horse_gait; (Part II, §Signals and Shouting) |
 | Sustainable gallop | 2-2.5 mi (3.2-4 km), i.e. ~4-6 min, then a walk to recover | blog-grade, via search summary, not opened: https://horserookie.com/how-long-can-a-horse-run/, https://horseracingsense.com/how-far-can-horses-run-without-stopping/ |
 | Sustainable canter / trot | ~7 mi (11 km) / ~20 mi (32 km) before a rest | blog-grade, via search summary, not opened: https://horserookie.com/how-long-can-a-horse-run/, https://horseracingsense.com/how-far-can-horses-run-without-stopping/ |
+| Rider bob | vertical, walk 0.03 / trot 0.08 / canter 0.06 / gallop 0.10 m, on the stride clock (2 bounces per stride at walk and trot, 1 at canter and gallop); the horse takes 75 %, the rider bounces the rest in the saddle | [design guess]; Part 4b motion cue (`GaitTable.BOB_AMPLITUDE_M`) |
+| Horse head nod | walk 4° / trot 0.6° / canter 6° / gallop 7°, head lowest 1/4 bounce after the bob at walk and trot, 1/10 at canter and gallop; rein hands follow 0.6 m/rad | [design guess]; the trot carries the head still (`RiderMotionTable`) |
+| Rider torso sway | pitch 0.7 / 0.5 / 1.8 / 1.4° at the bounce rate, roll 0.9 / 0.4 / 0.6 / 0.5° once per stride (walk/trot/canter/gallop), about the seat 0.8 m below the eyes | [design guess] |
+| Gait change blend | per-gait patterns cross-faded with a 0.35 s time constant, each scaled by its own gait's speed share | [design guess]; no camera jump when bounces per stride change |
+| Lean into turns | 35 % of the bank angle atan(v·ω/g), max 8° (a full-rein gallop turn), smoothed over 0.3 s | [design guess] |
+| Looking back | torso takes 30 % of the head turn, rein hands half of that; eyes 0.08 m in front of the neck | [design guess] |
+| Ground detail | world-space noise, ±35 % brightness and darker grass tufts, fading out 12-60 m from the eye; 0.4 m features, 0.09 m grain, 2.7 m patches | [design guess]; the walk-speed motion cue, no extra draw calls |
 | Courier speed | gallop ~40 km/h (11 m/s), then find the officer, explain, and have him signal | (Part II, §Signals and Shouting) |
 | Order latency | "several minutes", like a ~5-minute input delay in a 1-2 h battle | (Part II, §Signals and Shouting) |
 | Courier handoff time | 60-180 s to find the centurion/tribune and explain | [design guess] |
