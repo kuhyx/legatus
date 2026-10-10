@@ -23,6 +23,9 @@ var neck_pitch: float = 0.0
 ## measured view is fixed (kuhy's first battle bench screenshot was all sky).
 var controls_enabled: bool = true:
 	set = set_controls_enabled
+## Turn input (-1..1, + = left) used while controls are off, so a scripted
+## ride (DemoRide) can steer without faking key events.
+var scripted_turn: float = 0.0
 
 @onready var _neck: Node3D = $Neck
 @onready var _camera: Camera3D = $Neck/Camera
@@ -79,7 +82,7 @@ func look(yaw_delta: float, pitch_delta: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	var turn: float = 0.0
+	var turn: float = scripted_turn
 	var reining: bool = false
 	if controls_enabled:
 		turn = Input.get_axis(GeneralInput.TURN_RIGHT, GeneralInput.TURN_LEFT)

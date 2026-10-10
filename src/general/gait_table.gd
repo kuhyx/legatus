@@ -47,9 +47,25 @@ const GALLOP_RESUME_STAMINA: float = 0.3
 ## ~11 km (~30 min), longer than any fight. Gallop entry unused (see above).
 const STAMINA_RATE_PER_S: Array[float] = [0.005, 0.0033, 0.001, 0.0, 0.0]
 
-## Head bob [design guess]: vertical amplitude (m) and stride frequency (Hz).
+## Head bob [design guess]: vertical amplitude (m).
 const BOB_AMPLITUDE_M: Array[float] = [0.0, 0.015, 0.05, 0.035, 0.06]
-const BOB_FREQUENCY_HZ: Array[float] = [0.0, 1.8, 2.6, 1.9, 2.3]
+
+## Stride clock [design guess]: full leg cycles per second per gait. One
+## clock drives the bob, the horse's head nod and the hoof sounds, so they
+## cannot drift apart. The rider bounces twice per stride at walk and trot
+## (each diagonal / lateral push), once at canter and gallop (the suspension).
+const STRIDE_HZ: Array[float] = [0.0, 0.9, 1.3, 1.9, 2.3]
+const BOUNCES_PER_STRIDE: Array[int] = [0, 2, 2, 1, 1]
+## Hoof strikes as stride-phase offsets (0..1) [design guess]: walk 4 even
+## beats, trot 2 diagonal pairs, canter 3 beats then suspension, gallop 4
+## beats bunched before the suspension.
+const FOOTFALLS: Array[Array] = [
+	[],
+	[0.0, 0.25, 0.5, 0.75],
+	[0.0, 0.5],
+	[0.0, 0.2, 0.4],
+	[0.0, 0.1, 0.25, 0.35],
+]
 
 ## Rider neck + torso twist in the saddle, radians [design guess].
 const NECK_YAW_LIMIT_RAD: float = deg_to_rad(110.0)
@@ -63,6 +79,11 @@ static func speed(gait: int) -> float:
 
 static func turn_rate(gait: int) -> float:
 	return TURN_RATE_RAD_S[clampi(gait, HALT, GALLOP)]
+
+
+## Hoof-strike stride phases for a gait (empty at halt).
+static func footfalls(gait: int) -> PackedFloat32Array:
+	return PackedFloat32Array(FOOTFALLS[clampi(gait, HALT, GALLOP)])
 
 
 static func gallop_drain_per_s() -> float:

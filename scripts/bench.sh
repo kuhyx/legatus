@@ -26,13 +26,20 @@ readonly CAPPED="$HOME/.claude/scripts/capped.sh"
 SECONDS_ARG="--seconds=30"
 OFFSCREEN=false
 
+# Watchdog: a script parse error leaves Godot idling forever (--seconds is
+# never reached), so every run is killed at --seconds + GRACE_S.
+readonly GRACE_S=60
+
 godot_cmd() {
+    local limit=$(( ${SECONDS_ARG#--seconds=} + GRACE_S ))
+    local -a watchdog=(timeout --kill-after=10 "$limit")
     if [[ "$OFFSCREEN" == true ]]; then
-        CAP_CPU_PCT=20 CAP_MEM=4G "$CAPPED" xvfb-run -a -s '-screen 0 1920x1080x24' \
+        CAP_CPU_PCT=20 CAP_MEM=4G "$CAPPED" "${watchdog[@]}" \
+            xvfb-run -a -s '-screen 0 1920x1080x24' \
             godot --rendering-driver vulkan --gpu-index 0 --resolution 96x54 "$@" \
             --render-size=1920x1080
     else
-        godot "$@"
+        "${watchdog[@]}" godot "$@"
     fi
 }
 
@@ -62,7 +69,13 @@ run_scene() {
     shot="$REPO_ROOT/.shots/bench_${name}.png"
     mkdir -p "$REPO_ROOT/.shots"
     log="$(godot_cmd --path "$REPO_ROOT" --audio-driver Dummy "$scene" -- "$SECONDS_ARG" \
-        "--screenshot=$shot" 2>&1)"
+        "--screenshot=$shot" 2>&1)" || status=$?
+    if [[ "$status" -eq 124 || "$status" -eq 137 ]]; then
+        printf '%s\n' "$log" | grep -E 'ERROR' | head -5 >&2
+        echo "bench: FAIL $scene hung past --seconds (watchdog)" >&2
+        return 1
+    fi
+    status=0
     printf '%s\n' "$log" | grep -E '^(Vulkan|bench:|battle|alive|[a-z_]+_ms |primitives|screenshot)'
     if [[ "$log" =~ primitives\ max_monitor=0\ max_server=0 ]] || [[ ! "$log" =~ primitives\ max_monitor= ]]; then
         echo "bench: FAIL $scene drew no primitives" >&2

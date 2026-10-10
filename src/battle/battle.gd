@@ -8,7 +8,7 @@ extends Node3D
 ## last frame as PNG, `--eye=X,Z` start the general there, not on the vantage,
 ## `--order=N` send order N (0 advance, 1 hold, 2 withdraw) at start to the
 ## formation in view, `--debug` show soldier counts on the HUD (a real general
-## has no such readout).
+## has no such readout), `--demo-ride` ride the scripted DemoRide (recordings).
 
 const MAX_CATCH_UP: int = 3
 const HUD_PERIOD_S: float = 0.25
@@ -43,6 +43,8 @@ func _ready() -> void:
 	world = BattleWorld.build(world_seed, BenchScenario.PER_SIDE)
 	_build_scenery()
 	_place_general(_start_position())
+	if BenchScenario.arg("demo-ride", "false") == "true":
+		add_child(DemoRide.new(_general))
 	_army = ArmyRenderer.new()
 	_army.name = "Army"
 	add_child(_army)

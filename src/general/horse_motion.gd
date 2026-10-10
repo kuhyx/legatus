@@ -1,6 +1,6 @@
 class_name HorseMotion
 extends RefCounted
-## Pure horse kinematics: gait, speed, heading, stamina, head-bob phase.
+## Pure horse kinematics: gait, speed, heading, stamina, stride clock.
 ##
 ## No input, no nodes: General feeds it intents and reads the result, so tests
 ## can drive it with plain step() calls.
@@ -16,7 +16,10 @@ var stamina: float = GaitTable.STAMINA_MAX
 var exhausted: bool = false
 ## Bumped every time exhaustion forced a down-shift (for UI / tests).
 var forced_downshifts: int = 0
-var _bob_phase: float = 0.0
+## Fraction (0..1) of the current stride; see GaitTable.STRIDE_HZ.
+var stride_phase: float = 0.0
+## Whole strides completed since start (never wraps; for footfall edges).
+var stride_count: int = 0
 
 
 ## Shift one gait up. Returns false if refused (top gait, or tired horse).
@@ -46,7 +49,10 @@ func step(delta: float, turn_input: float) -> void:
 		heading + clampf(turn_input, -1.0, 1.0) * GaitTable.turn_rate(gait) * delta, -PI, PI
 	)
 	_update_stamina(delta)
-	_bob_phase = fmod(_bob_phase + GaitTable.BOB_FREQUENCY_HZ[gait] * TAU * delta, TAU)
+	stride_phase += GaitTable.STRIDE_HZ[gait] * delta * speed_share()
+	if stride_phase >= 1.0:
+		stride_count += int(stride_phase)
+		stride_phase = fmod(stride_phase, 1.0)
 
 
 ## Horizontal velocity in world space for the current heading and speed.
@@ -62,11 +68,17 @@ func forward() -> Vector3:
 ## Vertical camera offset from the gait's stride, scaled by how close the
 ## horse is to that gait's speed so a halt has no bob at all.
 func bob_offset() -> float:
+	var bounce: float = stride_phase * GaitTable.BOUNCES_PER_STRIDE[gait] * TAU
+	return sin(bounce) * GaitTable.BOB_AMPLITUDE_M[gait] * speed_share()
+
+
+## Speed as a share (0..1) of the current gait's speed: a horse still ramping
+## up strides and bobs less, a halt not at all.
+func speed_share() -> float:
 	var full: float = GaitTable.speed(gait)
 	if full <= 0.0:
 		return 0.0
-	var share: float = clampf(speed / full, 0.0, 1.0)
-	return sin(_bob_phase) * GaitTable.BOB_AMPLITUDE_M[gait] * share
+	return clampf(speed / full, 0.0, 1.0)
 
 
 func _update_stamina(delta: float) -> void:
