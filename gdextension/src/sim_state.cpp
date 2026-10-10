@@ -1,5 +1,6 @@
 #include "sim_state.h"
 
+#include <algorithm>
 #include <utility>
 
 namespace legatus {
@@ -8,7 +9,7 @@ void SimState::resize(int32_t p_count) {
 	count = p_count;
 	const size_t n = size_t(p_count);
 	for (std::vector<float> *v : { &px, &pz, &ox, &oz, &vx, &vz, &ovx, &ovz, &facing, &ofacing,
-				 &fatigue, &morale, &cooldown, &phase, &home_x }) {
+				 &fatigue, &morale, &cooldown, &phase, &home_x, &anchor_x, &anchor_z }) {
 		v->assign(n, 0.0f);
 	}
 	for (std::vector<int32_t> *v : { &hp, &dmg_in, &target, &formation }) {
@@ -50,8 +51,12 @@ void sim_kernel_damage(SimState &s, int32_t p_begin, int32_t p_end, int32_t r_de
 		if (!s.alive[i]) {
 			continue;
 		}
-		s.hp[i] -= d;
-		s.morale[i] -= 0.08f; // each wound shakes the man
+		// Light wounds wear a man down but never kill him (else a crowd
+		// hacking at one man would bleed whole ranks out in seconds); only a
+		// lethal blow, worth max_hp on its own, does.
+		const bool lethal = d >= s.params.max_hp;
+		s.hp[i] = lethal ? 0 : std::max(1, s.hp[i] - d);
+		s.morale[i] = std::max(0.0f, s.morale[i] - s.params.wound_morale); // each wound shakes him
 		if (s.hp[i] <= 0) {
 			s.hp[i] = 0;
 			s.alive[i] = 0;

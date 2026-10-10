@@ -10,6 +10,7 @@
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/packed_vector2_array.hpp>
 #include <godot_cpp/variant/rect2.hpp>
+#include <godot_cpp/variant/vector2.hpp>
 #include <godot_cpp/variant/vector3.hpp>
 
 #include <vector>
@@ -81,6 +82,35 @@ public:
 	int32_t get_search_cells() const { return state.params.search_cells; }
 	int32_t get_chunk_count() const { return chunks; }
 
+	// Formations (battle_sim_formation.cpp): order + morale groups, ids 0..F-1.
+	static constexpr int ORDER_ADVANCE = legatus::ORDER_ADVANCE;
+	static constexpr int ORDER_HOLD = legatus::ORDER_HOLD;
+	static constexpr int ORDER_WITHDRAW = legatus::ORDER_WITHDRAW;
+	int32_t get_formation_count() const { return state.forms.count; }
+	int32_t get_formation_side(int32_t p_f) const;
+	Vector2 get_formation_center(int32_t p_f) const;
+	int32_t get_formation_order(int32_t p_f) const;
+	// No-op on a routed formation. HOLD anchors each man where he stands now.
+	void set_formation_order(int32_t p_f, int32_t p_order);
+	float get_formation_cohesion(int32_t p_f) const;
+	bool is_formation_routed(int32_t p_f) const;
+	// (dead + fled) / start strength.
+	float get_formation_losses(int32_t p_f) const;
+	// Loss fraction at the tick it broke; -1 while it never has.
+	float get_formation_break_losses(int32_t p_f) const;
+	// Living men still on the field.
+	int32_t get_formation_strength(int32_t p_f) const;
+	bool is_formation_engaged(int32_t p_f) const;
+	// Routers who left the sim's box: not alive, not dead, never drawn.
+	int32_t get_fled(int32_t p_side) const;
+	// Test hook: one id per soldier; before setup_* (applied by the next
+	// setup with the same count) or after it (applied at once).
+	void set_formation_ids(const PackedInt32Array &p_ids);
+	// Tuning hook: combat / cohesion constants by name (see get_tuning() for
+	// the keys). Break thresholds are sampled at setup, so set those first.
+	void set_tuning(const Dictionary &p_values);
+	Dictionary get_tuning() const;
+
 protected:
 	static void _bind_methods();
 
@@ -93,6 +123,8 @@ private:
 	int64_t last_tick_usec = 0;
 	int32_t last_tick_threads = 0;
 	int32_t alive_count[2] = { 0, 0 };
+	int32_t fled_count[2] = { 0, 0 };
+	std::vector<int32_t> pending_formation; // set_formation_ids before setup
 	Phase phase = PH_MOVE;
 	std::vector<size_t> chunk_thread;
 	std::vector<int32_t> chunk_deaths;
@@ -123,6 +155,8 @@ private:
 	void write_chunk(uint32_t p_chunk, int32_t p_begin, int32_t p_end);
 	int32_t fill_side(int32_t p_side, float p_alpha, float p_near2);
 	static void _bind_view_methods();
+	static void _bind_formation_methods();
+	void setup_formations();
 	static void chunk_thunk(void *p_self, uint32_t p_chunk);
 };
 

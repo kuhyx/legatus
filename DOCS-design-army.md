@@ -181,6 +181,13 @@ without the mark are sourced.
   defaults must give a median break near ≤10% losses and median final losses
   near 4-5% for winners and 14-16% for losers. A regression test checks the
   numbers [design].
+  **Sim, 2026-10-10** (`src/sim/calibrate_morale.gd`, 2 x 50k bench, seed
+  42, one run capped at 15 min, constants in the `DOCS-design.md` table):
+  breaks at 1.8-7.8 % losses (medians 2.4 % / 5.2 %), most 3.5-4 min into
+  contact, a few pairs fought on to 11-15 min. The side that broke (24/25
+  blocks) lost 15.9 % killed, 6.8 k of 7.9 k after its first break, and 77.5 %
+  fled. The other broke 6/25 blocks: 4.5 % killed at 8 min, 6.8 % at the cap
+  (one pair still in contact). No block has yet routed with zero losses.
 - **Claim:** Extreme casualties come from special circumstances: the army
   cannot retreat. Romans pursued better than hoplites did (Part IIIc, §When
   Does Morale and Cohesion Fail?). At Cannae, ~70,000 of ~86,000 Romans died

@@ -39,6 +39,7 @@ void BattleSim::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_search_cells"), &BattleSim::get_search_cells);
 	BIND_CONSTANT(STRIDE);
 	_bind_view_methods();
+	_bind_formation_methods();
 }
 
 void BattleSim::setup_lines(int32_t p_per_side, float p_frontage, float p_gap, int64_t p_seed) {
@@ -50,6 +51,8 @@ void BattleSim::setup_lines(int32_t p_per_side, float p_frontage, float p_gap, i
 	const float rank_gap = 1.1f; // m between ranks
 	const int32_t files = std::max(1, int32_t(p_frontage / file_gap));
 	const int32_t ranks = (per + files - 1) / files;
+	const int32_t block_files = 60; // ~cohort-wide blocks
+	const int32_t blocks = (files + block_files - 1) / block_files; // per side
 	for (int32_t i = 0; i < s.count; i++) {
 		const int32_t side = i < per ? 0 : 1;
 		const int32_t k = i - side * per;
@@ -64,7 +67,7 @@ void BattleSim::setup_lines(int32_t p_per_side, float p_frontage, float p_gap, i
 		s.home_x[i] = x;
 		s.pz[i] = side == 0 ? -depth : depth;
 		s.facing[i] = side == 0 ? 0.0f : float(Math_PI);
-		s.formation[i] = side * 1000 + file / 60; // ~cohort-wide blocks
+		s.formation[i] = side * blocks + file / block_files; // contiguous, side 0 first
 	}
 	const float half_w = 0.5f * float(files) * file_gap + 80.0f;
 	const float depth = 0.5f * p_gap + float(ranks) * rank_gap + 120.0f;
@@ -88,6 +91,7 @@ void BattleSim::setup_custom(const PackedVector2Array &p_pos, const PackedByteAr
 		s.pz[i] = p.y;
 		s.home_x[i] = p.x;
 		s.facing[i] = s.side[i] == 0 ? 0.0f : float(Math_PI);
+		s.formation[i] = s.side[i]; // one formation per side unless set_formation_ids
 		lo_x = std::min(lo_x, p.x);
 		lo_z = std::min(lo_z, p.y);
 		hi_x = std::max(hi_x, p.x);
@@ -116,6 +120,9 @@ void BattleSim::finish_setup(float p_min_x, float p_min_z, float p_max_x, float 
 	s.grid.configure(p_min_x, p_min_z, p_max_x, p_max_z, 2.0f);
 	alive_count[0] = s.side_begin[1];
 	alive_count[1] = s.count - s.side_begin[1];
+	fled_count[0] = 0;
+	fled_count[1] = 0;
+	setup_formations();
 	last_tick_usec = 0;
 	last_tick_threads = 0;
 }

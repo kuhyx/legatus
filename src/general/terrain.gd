@@ -4,8 +4,8 @@ extends Node3D
 ## field with its own index convention (row-major, x fastest, centred), so the
 ## horse rides on exactly the hills Visibility tests against.
 
-const LOW_COLOR: Color = Color(0.33, 0.42, 0.2)
-const HIGH_COLOR: Color = Color(0.52, 0.5, 0.33)
+const LOW_COLOR: Color = Color(0.31, 0.42, 0.18)
+const HIGH_COLOR: Color = Color(0.55, 0.5, 0.3)
 
 var field: HeightField = null
 
@@ -47,7 +47,12 @@ func _build_mesh() -> ArrayMesh:
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	var material: StandardMaterial3D = StandardMaterial3D.new()
 	material.vertex_color_use_as_albedo = true
+	# LOW_COLOR/HIGH_COLOR are sRGB picks; read as linear they render ~1.5x
+	# brighter and wash out to pale cream under the tonemapper.
+	material.vertex_color_is_srgb = true
 	material.roughness = 1.0
+	# Dry grass is diffuse; the default 0.5 mirrored the pale sky at grazing angles.
+	material.metallic_specular = 0.2
 	mesh.surface_set_material(0, material)
 	return mesh
 

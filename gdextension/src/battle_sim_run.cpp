@@ -72,6 +72,12 @@ void BattleSim::tick(float p_dt) {
 		alive_count[0] -= chunk_deaths[c * 2];
 		alive_count[1] -= chunk_deaths[c * 2 + 1];
 	}
+	int32_t fled[2] = { 0, 0 };
+	legatus::sim_formation_pass(s, fled); // serial: fled leave, cohesion, routs
+	for (int side = 0; side < 2; side++) {
+		alive_count[side] -= fled[side];
+		fled_count[side] += fled[side];
+	}
 	s.tick++;
 	std::sort(threads.begin(), threads.end());
 	last_tick_threads = int32_t(std::unique(threads.begin(), threads.end()) - threads.begin());

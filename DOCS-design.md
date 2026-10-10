@@ -142,6 +142,17 @@ Conversions (km/h to m/s, miles to km) are mine. Rows labelled [design] or
 | Daily food for a 19,200-man army | 61,850 kg (people + animals) | (Logistics I, §Scale) |
 | Camps before battle | "just a few miles" apart; days to a month | (Part I, §Offering Battle) |
 | Infantry charge speed | 2.5-3.5 m/s for the last 20-40 m | [design guess] |
+| Sim formation | ~60 files wide x full depth (`setup_lines`); ~2,000 men in the 2 x 50k bench | [design] |
+| Break threshold | per formation, uniform 4-10 % losses (dead + fled), seeded; cohesion = 1 - losses/threshold - stress; routs at 0 | [design guess]; (Part IIIc, §When Does Morale and Cohesion Fail?) |
+| Contact stress / recovery | -0.0015 cohesion/s in line contact; +0.004/s out of contact | [design guess] |
+| A rout seen nearby | once, at the break: friend -0.5, enemy +0.5 cohesion, x (1 - d/150 m) between centroids; enemy still running nearby +0.03/s | [design guess]; (Part IIIc, §Gaming Morale) |
+| A man running alone | only when his own morale < 0.12 and his formation's cohesion < 0.1 | [design guess]; at 0.35 the winners' lone runaways cascaded into routs |
+| Withdraw while engaged | -0.4 cohesion once; may become a rout | [design guess]; (Part II, §Signals and Shouting) |
+| Melee lethality | a blow per ~1.4 s fresh (x2 tired), 30 % land, 0.15 % of those kill; light wounds never kill. Measured ~1 %/min of a 34-deep block, ~0.6 %/min tired (a 6-deep block loses ~5x the share) | [design guess], measured with `src/sim/calibrate_morale.gd` |
+| Fatigue | +0.005 per blow, +0.004/s in contact, +0.02/s running, -0.01/s at rest; tired = blows 2x slower, 40 % less likely to land, half speed | [design guess] |
+| Pursuit | against a routed formation 60 % land, 8 % of those kill; routers never strike back | [design guess]; (Part IIIc, §When Does Morale and Cohesion Fail?) |
+| Rout / pursuit speed | routers 3.0 m/s ±35 % per man, pursuers 3.6 m/s, both x (1 - fatigue/2) | [design guess] |
+| Fled | a router reaching the sim box edge leaves: not alive, not dead, not drawn | [design]; "dispersed" (`DOCS-design-army.md` §4) |
 
 ## Decisions (kuhy, 2026-10-10)
 

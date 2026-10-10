@@ -34,7 +34,8 @@ void BattleSim::classify_chunk(uint32_t p_chunk, int32_t p_begin, int32_t p_end)
 		const float x = s.ox[i] + (s.px[i] - s.ox[i]) * a;
 		const float z = s.oz[i] + (s.pz[i] - s.oz[i]) * a;
 		uint8_t cls = DRAW_HIDDEN;
-		if (tiles.is_visible(x, z)) {
+		// The fallen are drawn; men who fled the field are gone.
+		if (s.state[i] != legatus::ST_FLED && tiles.is_visible(x, z)) {
 			const float dx = x - job_camera.x;
 			const float dz = z - job_camera.z;
 			cls = dx * dx + dz * dz < job_near2 ? DRAW_NEAR : DRAW_FAR;
