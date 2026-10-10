@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/general/general.gd" id="1_general"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_horse"]
+radius = 0.7
+height = 2.4
+
+[node name="General" type="CharacterBody3D"]
+script = ExtResource("1_general")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+shape = SubResource("CapsuleShape3D_horse")
+
+[node name="Neck" type="Node3D" parent="."]
+
+[node name="Camera" type="Camera3D" parent="Neck"]
+current = true
