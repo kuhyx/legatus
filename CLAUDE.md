@@ -49,6 +49,9 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
 - `src/battle/` — the playable battle: `BattleWorld` (terrain, flattened plain,
   woods, 2x50k sim, start on rising ground behind side 0), `BattleSight`
   (time-budgeted sight-tile sweeps), `battle.gd` (scene, HUD).
+- `src/command/` — orders by courier (DOCS-design-command §3): `CourierService`
+  (pool, sim-tick step, seeded RNG) over a `FormationSource` of Callables,
+  `CourierSettings` (numbers-table guesses), `OrderPicker`, `OrderInput` (1/2/3).
 - `scenes/battle/` — main scene: the general rides around the live battle.
 - `scenes/bench/` — fixed worst-case 100k scenario for both perf gates.
 - `scenes/general/` — ride-around scene for the general (dummy formations).
