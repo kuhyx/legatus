@@ -69,9 +69,21 @@ func draw(eye: Vector3) -> void:
 
 ## The order as the formation's officer receives it.
 func deliver(f: int, order: int) -> void:
-	if order == OrderInput.ADVANCE and _sim.is_formation_engaged(f):
-		return
-	_sim.set_formation_order(f, order)
+	var engaged: bool = _sim.is_formation_engaged(f)
+	if not (order == OrderInput.ADVANCE and engaged):
+		_sim.set_formation_order(f, order)
+	print_verbose(
+		(
+			"orders: %s reached formation %d (engaged %s): order now %d, cohesion %.2f"
+			% [
+				ORDER_NAMES[order],
+				f,
+				engaged,
+				_sim.get_formation_order(f),
+				_sim.get_formation_cohesion(f)
+			]
+		)
+	)
 
 
 func general_xz() -> Vector2:

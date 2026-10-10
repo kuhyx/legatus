@@ -34,8 +34,15 @@ p99 6.3 ms. Offscreen fps gate: bench 6.1 ms / battle 7.1 ms frame p99.
   roll (10-25 %, numbers table) on courier delivery.
 - Enemy AI following its own pre-battle plan (plan dominance, Part II).
 - Signals (trumpets/standards) with limited reach (DOCS-design-command §2).
-- Withdraw -> rally: routed units never rally yet; withdrawn units walk to
-  the clamp edge forever. Add a halt/rally rule.
+- **Orders barely matter yet**: the lines start 6 m apart, so every Roman
+  block is engaged from t~0; "advance" is dropped and "hold" changes
+  little. Deploy a second line / reserve (triplex acies) out of contact.
+- Withdraw -> rally: routed units never rally; withdraw has no halt point
+  (expected to walk on to the clamp edge; not observed). Add halt/rally.
+- Live check 2026-10-10: `--eye=180,-150 --order=2 --seconds=210 --verbose`
+  -> withdraw reached engaged block 15 at 179.7 s, cohesion -> 0, it routed.
+- Debug only: `CourierService.delivered_count` counts an "advance" that
+  BattleCommand.deliver drops for an engaged block.
 
 ## Known gaps carried over
 

@@ -10,10 +10,16 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
 ## Commands
 
 - run: `godot --path .` (main scene `scenes/battle/battle.tscn`; user args after
-  `--`: `--seconds=N`, `--screenshot=PATH`, `--eye=X,Z`, `--debug`)
-- screenshot (off the live display): `capped.sh xvfb-run -a -s '-screen 0 2560x1440x24'
-  godot --rendering-driver opengl3 --path . scenes/battle/battle.tscn --
-  --seconds=4 --screenshot=$PWD/.shots/general_view.png` (`.shots/` is ignored)
+  `--`: `--seconds=N`, `--screenshot=PATH`, `--eye=X,Z`, `--debug`,
+  `--order=N` send 0 advance / 1 hold / 2 withdraw at start to the block in
+  view; add `--verbose` for the `couriers:` / `orders:` log)
+- screenshot (off the live display, Forward+): `capped.sh xvfb-run -a -s '-screen 0 640x360x24'
+  godot --rendering-driver vulkan --path . scenes/battle/battle.tscn --
+  --seconds=4 --render-size=1920x1080 --screenshot=$PWD/.shots/general_view.png`
+  (`.shots/` is ignored)
+- calibrate morale: `capped.sh godot --headless --audio-driver Dummy --path .
+  -s res://src/sim/calibrate_morale.gd -- --minutes=15 [--tune=k:v,...]`
+  (losses at break / final per side vs the DOCS-design-army §4 targets)
 - build: `scripts/build.sh` (C++ GDExtension -> `bin/`, capped)
 - bench-headless: `scripts/bench_headless.sh` (100k sim tick p50/p99, capped)
 - bench: `scripts/bench.sh --offscreen` (fps gate on the real GPU inside Xvfb,
@@ -43,7 +49,9 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
 
 - `gdextension/src/` — C++ simulation (structure-of-arrays, spatial grid, worker threads).
   `battle_sim_run.cpp` tick, `battle_sim_fill.cpp` MultiMesh fills,
-  `battle_sim_view.cpp` + `sim_view.*` the general's view (below).
+  `battle_sim_view.cpp` + `sim_view.*` the general's view (below),
+  `sim_formation.*` + `battle_sim_formation.cpp` formations (below),
+  `sim_steer.cpp` per-order steering.
 - `src/sim/` — GDScript glue: battle setup, MultiMesh rendering.
 - `src/general/` — the player: horse, rider camera, line-of-sight visibility.
 - `src/battle/` — the playable battle: `BattleWorld` (terrain, flattened plain,
@@ -51,7 +59,8 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
   (time-budgeted sight-tile sweeps), `battle.gd` (scene, HUD).
 - `src/command/` — orders by courier (DOCS-design-command §3): `CourierService`
   (pool, sim-tick step, seeded RNG) over a `FormationSource` of Callables,
-  `CourierSettings` (numbers-table guesses), `OrderPicker`, `OrderInput` (1/2/3).
+  `CourierSettings` (numbers-table guesses), `OrderPicker`, `OrderInput` (1/2/3),
+  `BattleCommand` (the node in battle.gd: keys -> courier, riders in sight).
 - `scenes/battle/` — main scene: the general rides around the live battle.
 - `scenes/bench/` — fixed worst-case 100k scenario for both perf gates.
 - `scenes/general/` — ride-around scene for the general (dummy formations).
@@ -68,3 +77,13 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
   (+`VisionTable.TARGET_HEIGHT_M`) in C++; `set_sight(dict)` passes the
   VisionTable constants + woods (C++ port of `Visibility`, parity-tested).
 - Counts: `get_drawn_count(side)` (incl. the fallen), `get_visible_alive(side)`.
+
+## Formations (morale + order groups)
+
+- Ids are contiguous, side 0 first (`setup_lines`: ~60-file blocks;
+  `setup_custom`: one per side; `set_formation_ids(ids)` regroups).
+- `get_formation_count/side/center/order/cohesion/losses/break_losses/strength`,
+  `is_formation_routed/engaged`, `set_formation_order(f, ORDER_ADVANCE|HOLD|WITHDRAW)`
+  (ignored once routed). Serial formation pass after damage (determinism).
+- Routers leaving the clamp box become `ST_FLED`: not drawn, not alive,
+  `get_fled(side)`. `set_tuning(dict)` / `get_tuning()` expose the constants.
