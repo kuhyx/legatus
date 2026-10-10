@@ -6,7 +6,9 @@ extends Node3D
 ## interpolation, like bench_battle.gd. User args (after `--`):
 ## `--seconds=N` quit after N s (default: never), `--screenshot=PATH` save the
 ## last frame as PNG, `--eye=X,Z` start the general there, not on the vantage,
-## `--debug` show soldier counts on the HUD (a real general has no such readout).
+## `--order=N` send order N (0 advance, 1 hold, 2 withdraw) at start to the
+## formation in view, `--debug` show soldier counts on the HUD (a real general
+## has no such readout).
 
 const MAX_CATCH_UP: int = 3
 const HUD_PERIOD_S: float = 0.25
@@ -18,6 +20,7 @@ const WARMUP_SEC: float = 1.0
 var world: BattleWorld = null
 var _sight: BattleSight = null
 var _army: ArmyRenderer = null
+var _command: BattleCommand = null
 var _seconds: float = 0.0
 var _elapsed: float = 0.0
 var _accum: float = 0.0
@@ -44,6 +47,13 @@ func _ready() -> void:
 	_army.name = "Army"
 	add_child(_army)
 	_army.setup(world.sim, world.render_bounds())
+	_command = BattleCommand.new()
+	_command.name = "Command"
+	add_child(_command)
+	_command.setup(world.sim, world.field, _general, world_seed)
+	var order: int = BenchScenario.arg("order", "-1").to_int()
+	if order >= 0:
+		print("order %d sent to formation %d" % [order, _command.send(order, _view())])
 	# One synchronous sweep so the first frame is already culled.
 	_sight = BattleSight.new(world.sim)
 	var tiles: int = _sight.full_sweep(_general.eye_position())
@@ -73,6 +83,12 @@ func _start_position() -> Vector2:
 
 
 ## Stand the general at XZ, facing the enemy (+Z; heading PI, see HorseMotion).
+## The general's head turned to the line: a timed run has no mouse-look.
+func _view() -> Transform3D:
+	_general.force_update_transform()
+	return _general.camera().global_transform
+
+
 func _place_general(at: Vector2) -> void:
 	_general.position = Vector3(at.x, world.field.height_at(at.x, at.y) + 0.2, at.y)
 	_general.motion.heading = PI
@@ -88,11 +104,13 @@ func _process(delta: float) -> void:
 	var steps: int = 0
 	while _accum >= BenchScenario.TICK_DT and steps < MAX_CATCH_UP:
 		world.sim.tick(BenchScenario.TICK_DT)
+		_command.tick(BenchScenario.TICK_DT)
 		_accum -= BenchScenario.TICK_DT
 		steps += 1
 	_accum = minf(_accum, BenchScenario.TICK_DT)
 	_sight.step(_general.eye_position())
 	_army.draw(_accum / BenchScenario.TICK_DT, _general.camera().global_position)
+	_command.draw(_general.eye_position())
 	_hud_timer += delta
 	if _hud_timer >= HUD_PERIOD_S:
 		_hud_timer = 0.0
@@ -131,6 +149,8 @@ func _update_hud() -> void:
 			"  (blown)" if motion.exhausted else "",
 		]
 	)
+	if not _command.note.is_empty():
+		_hud.text += "\n" + _command.note
 	if _debug_hud:
 		_hud.text += "\n[debug] soldiers in sight: %d / alive %d" % [_in_sight(), _alive()]
 

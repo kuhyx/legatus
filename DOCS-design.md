@@ -106,6 +106,7 @@ Conversions (km/h to m/s, miles to km) are mine. Rows labelled [design] or
 | Order latency | "several minutes", like a ~5-minute input delay in a 1-2 h battle | (Part II, §Signals and Shouting) |
 | Courier handoff time | 60-180 s to find the centurion/tribune and explain | [design guess] |
 | Courier loss probability | 1% per km behind own lines; 15% per pass within 200 m of enemy skirmishers or cavalry; 50% for a crossing through the melee zone | [design guess]; a messenger can be killed (Part II, §Signals and Shouting); a game that models it (Part II, fn 12) |
+| Courier hazard rule | one loss roll per order at dispatch: 1 %/km, plus ONE 15 % roll if any enemy block is within 200 m of the route, or ONE 50 % roll (instead) if an engaged enemy is within 40 m; the route is judged up to 60 m short of the target (orders reach engaged units from the rear); routed target = order lost; arrival 15 m from the block centre | [design] (`src/command/courier_settings.gd`) |
 | Order ignored (junior courier, no token) | 10-25% depending on officer seniority gap | [design guess]; rank-respect problem (Part II, §Signals and Shouting) |
 | Relay riders (operational, not tactical) | >100 miles/day (>160 km/day) on pre-set routes with fresh horses | (Part I, §Reports) |
 | Reports through merchants / rumour | about the speed of an army on the march; often days to weeks old | (Part I, §Reports) |

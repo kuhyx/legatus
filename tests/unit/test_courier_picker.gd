@@ -83,6 +83,25 @@ func test_loss_near_enemy_and_through_melee() -> void:
 	assert_almost_eq(chance, 0.0, 1e-6, "own formations, even fighting, are no danger")
 
 
+func test_many_enemy_blocks_are_still_one_pass() -> void:
+	var settings: CourierSettings = CourierSettings.new()
+	settings.loss_per_km = 0.0
+	var fake: CourierFake = _fake_with_enemy(Vector2(100.0, 1000.0), false)
+	for i: int in 6:
+		fake.add(Vector2(-100.0 + 40.0 * i, 1020.0), 1)
+	var chance: float = settings.loss_chance(Vector2.ZERO, Vector2(0.0, 2000.0), fake.source(), 0)
+	assert_almost_eq(chance, 0.15, 1e-6, "one roll per pass, not per enemy block")
+
+
+func test_reaching_an_engaged_unit_from_behind_is_not_a_melee_crossing() -> void:
+	var settings: CourierSettings = CourierSettings.new()
+	settings.loss_per_km = 0.0
+	# The enemy is locked with the target, 40 m past its centre.
+	var fake: CourierFake = _fake_with_enemy(Vector2(0.0, 2040.0), true)
+	var chance: float = settings.loss_chance(Vector2.ZERO, Vector2(0.0, 2000.0), fake.source(), 0)
+	assert_almost_eq(chance, 0.15, 1e-6, "near the enemy, but not through the melee")
+
+
 func test_order_keys_registered() -> void:
 	OrderInput.ensure_actions()
 	var two: InputEventKey = InputEventKey.new()

@@ -6,13 +6,13 @@ extends Resource
 ## Loss model, one roll per order at dispatch, over the straight route from
 ## the general to the target formation's centre at that moment:
 ## - behind own lines: 1 - (1 - loss_per_km)^km;
-## - each ENEMY formation (side != the target's side) counts at most once:
-##   engaged and its centre within melee_radius_m of the route -> the melee
-##   crossing roll (supersedes the near-enemy roll for that formation);
-##   otherwise centre within near_enemy_radius_m -> the near-enemy roll.
-## Chances combine as independent survivals. A courier to a unit locked in
-## melee therefore usually takes the melee roll: the enemy centre sits a few
-## dozen metres past the contact line, i.e. at the end of his route.
+## - one near-enemy roll per pass: ANY enemy formation centre within
+##   near_enemy_radius_m of the route (the table's "per pass", not per unit;
+##   line infantry stands in for skirmishers and cavalry until those exist);
+## - one melee roll if any ENGAGED enemy centre lies within melee_radius_m of
+##   the route; it supersedes the near-enemy roll.
+## The hazard route stops delivery_standoff_m short of the target: the rider
+## reaches an engaged unit from its rear, he does not cross its melee.
 ## The ride back is not rolled: the order is already delivered or lost.
 
 ## Gallop ~40 km/h (Part II, §Signals and Shouting).
@@ -29,6 +29,8 @@ extends Resource
 ## the route [design guess]. 40 m ~ the depth of the fighting front.
 @export var loss_melee_crossing: float = 0.5
 @export var melee_radius_m: float = 40.0
+## Hazards are judged on the route up to this far short of the target centre.
+@export var delivery_standoff_m: float = 60.0
 ## The general's courier pool [design: 6-10] (DOCS-design-command.md §3).
 @export var pool_size: int = 8
 ## The rider reins in this close to the formation centre (or the general).
@@ -43,14 +45,20 @@ func speed_mps() -> float:
 ## `to` is lost on the way, given the formations' state at dispatch.
 func loss_chance(from: Vector2, to: Vector2, source: FormationSource, own_side: int) -> float:
 	var survive: float = pow(1.0 - clampf(loss_per_km, 0.0, 1.0), from.distance_to(to) / 1000.0)
+	var route: float = from.distance_to(to)
+	var end: Vector2 = from.move_toward(to, maxf(route - delivery_standoff_m, 0.0))
+	var near: bool = false
+	var melee: bool = false
 	for f: int in source.formation_count():
 		if source.side_of(f) == own_side:
 			continue
-		var gap: float = _segment_distance(source.center_of(f), from, to)
-		if gap <= melee_radius_m and source.is_engaged(f):
-			survive *= 1.0 - clampf(loss_melee_crossing, 0.0, 1.0)
-		elif gap <= near_enemy_radius_m:
-			survive *= 1.0 - clampf(loss_near_enemy, 0.0, 1.0)
+		var gap: float = _segment_distance(source.center_of(f), from, end)
+		melee = melee or (gap <= melee_radius_m and source.is_engaged(f))
+		near = near or gap <= near_enemy_radius_m
+	if melee:
+		survive *= 1.0 - clampf(loss_melee_crossing, 0.0, 1.0)
+	elif near:
+		survive *= 1.0 - clampf(loss_near_enemy, 0.0, 1.0)
 	return clampf(1.0 - survive, 0.0, 1.0)
 
 
