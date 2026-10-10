@@ -9,7 +9,10 @@ Headless 100k worst case: tick p50 4.3 ms, p99 6.3 ms (under the 20 % cap).
 ## Blocking on kuhy first
 
 - Windowed fps gate (gate 2) has never run: `! ~/src/legatus/scripts/bench.sh`
-  (opens a window, ~30 s, prints p50/p99 frame ms; target p99 <= 16.7 ms).
+  (opens a window, 2 x 30 s: bench.tscn then battle.tscn; exits 1 if either
+  frame p99 > 16.7 ms). First Forward+ render ever: all visual checks so far
+  were Compatibility on llvmpipe. Headless+capped battle frame p99 was 35 ms
+  (not representative, but hints at the sync-tick spike).
   If it misses: async/triple-buffered tick (sync tick costs ~3–5 ms every
   third frame), compact LOD uploads (~12.8 MB/frame today), then GPU path.
 - Answer the 8 open questions in `DOCS-design.md` (symmetric 50k vs Polybius'
@@ -39,4 +42,8 @@ Headless 100k worst case: tick p50 4.3 ms, p99 6.3 ms (under the 20 % cap).
 - Real impostors beyond 120 m (today: 24-tri box); crowd shadows off.
 - Dead soldiers stay in the instance count.
 - Visibility is per 25 m tile centre; soldiers do not occlude each other.
+- Culling treats soldiers OUTSIDE the tile grid as drawn: once routs exist,
+  fugitives leaving the battle bounds are visible regardless of LOS. Fix then.
+- godot-cpp pin (`godot-4.5-stable`) is NOT checked by the dep-freshness gate
+  (it has no submodule support); checked by hand against the tag list 2026-10-10.
 - Original note's "prehistorical blog post (?)" is still unidentified.

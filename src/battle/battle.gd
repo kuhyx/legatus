@@ -5,10 +5,13 @@ extends Node3D
 ## general from a horse could see"). Fixed 20 Hz sim tick with render
 ## interpolation, like bench_battle.gd. User args (after `--`):
 ## `--seconds=N` quit after N s (default: never), `--screenshot=PATH` save the
-## last frame as PNG, `--eye=X,Z` start the general there, not on the vantage.
+## last frame as PNG, `--eye=X,Z` start the general there, not on the vantage,
+## `--debug` show soldier counts on the HUD (a real general has no such readout).
 
 const MAX_CATCH_UP: int = 3
 const HUD_PERIOD_S: float = 0.25
+## Frames in the first second (loading, first sweep) are not counted.
+const WARMUP_SEC: float = 1.0
 
 @export var world_seed: int = 7
 
@@ -19,6 +22,8 @@ var _seconds: float = 0.0
 var _elapsed: float = 0.0
 var _accum: float = 0.0
 var _hud_timer: float = 0.0
+var _debug_hud: bool = false
+var _frame_ms: SimStats = SimStats.new()
 
 @onready var _general: General = $General
 @onready var _hud: Label = $Hud/Status
@@ -26,6 +31,7 @@ var _hud_timer: float = 0.0
 
 func _ready() -> void:
 	_seconds = BenchScenario.arg("seconds", "0").to_float()
+	_debug_hud = BenchScenario.arg("debug", "false") == "true"
 	world = BattleWorld.build(world_seed, BenchScenario.PER_SIDE)
 	_build_scenery()
 	_place_general(_start_position())
@@ -70,6 +76,8 @@ func _place_general(at: Vector2) -> void:
 
 func _process(delta: float) -> void:
 	_elapsed += delta
+	if _elapsed > WARMUP_SEC:
+		_frame_ms.add(delta * 1000.0)
 	_accum += delta
 	var steps: int = 0
 	while _accum >= BenchScenario.TICK_DT and steps < MAX_CATCH_UP:
@@ -85,6 +93,7 @@ func _process(delta: float) -> void:
 		_update_hud()
 	if _seconds > 0.0 and _elapsed >= _seconds:
 		_report("end")
+		print(_frame_ms.summary("frame_ms"))
 		_save_screenshot(BenchScenario.arg("screenshot", ""))
 		get_tree().quit()
 
@@ -107,16 +116,16 @@ func _alive() -> int:
 func _update_hud() -> void:
 	var motion: HorseMotion = _general.motion
 	_hud.text = (
-		"gait: %s  speed: %.1f m/s  stamina: %d%%%s\nsoldiers in sight: %d / alive %d"
+		"gait: %s  speed: %.1f m/s  stamina: %d%%%s"
 		% [
 			GaitTable.GAIT_NAMES[motion.gait],
 			motion.speed,
 			roundi(motion.stamina * 100.0),
 			"  (blown)" if motion.exhausted else "",
-			_in_sight(),
-			_alive(),
 		]
 	)
+	if _debug_hud:
+		_hud.text += "\n[debug] soldiers in sight: %d / alive %d" % [_in_sight(), _alive()]
 
 
 func _report(label: String) -> void:
