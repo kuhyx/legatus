@@ -4,13 +4,13 @@ Godot 4.7.2 (Forward+) + a C++ GDExtension (godot-cpp `godot-4.5-stable`,
 submodule). Realistic ancient battle simulator: you are the general, first
 person on horseback, seeing only what a rider sees, commanding by courier.
 Target: 2x50k individually simulated soldiers at >=60 fps on an RTX 3090.
-Local repo (no remote yet). `DOCS-design*.md` hold the sourced mechanics and
-the numbers table (ACOUP "Total Generalship"); constants come from there.
+Remote: `github.com/kuhyx/legatus` (public, experiment). `DOCS-design*.md`
+hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total Generalship"); constants come from there.
 
 ## Commands
 
 - run: `godot --path .` (main scene `scenes/battle/battle.tscn`; user args after
-  `--`: `--seconds=N`, `--screenshot=PATH`, `--eye=X,Z`)
+  `--`: `--seconds=N`, `--screenshot=PATH`, `--eye=X,Z`, `--debug`)
 - screenshot (off the live display): `capped.sh xvfb-run -a -s '-screen 0 2560x1440x24'
   godot --rendering-driver opengl3 --path . scenes/battle/battle.tscn --
   --seconds=4 --screenshot=$PWD/.shots/general_view.png` (`.shots/` is ignored)

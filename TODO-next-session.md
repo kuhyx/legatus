@@ -3,7 +3,7 @@
 REMOVE ME AFTER FINISH
 
 State at hand-off (2026-10-10): Parts 1–3 + integration are committed on
-`main` (local only, no remote). `scripts/check.sh` is all green (43/43 tests).
+`main`, pushed to github.com/kuhyx/legatus. `scripts/check.sh` is all green (43/43 tests).
 Headless 100k worst case: tick p50 4.3 ms, p99 6.3 ms (under the 20 % cap).
 
 ## Blocking on kuhy first
@@ -15,12 +15,7 @@ Headless 100k worst case: tick p50 4.3 ms, p99 6.3 ms (under the 20 % cap).
   (not representative, but hints at the sync-tick spike).
   If it misses: async/triple-buffered tick (sync tick costs ~3–5 ms every
   third frame), compact LOD uploads (~12.8 MB/frame today), then GPU path.
-- Answer the 8 open questions in `DOCS-design.md` (symmetric 50k vs Polybius'
-  86k/50k; which side; campaign phase; time compression; general's death;
-  Roman frontage 0.9 vs 1.8 m; courier loss/disobedience tuning; reports as
-  text or voice).
-- GitHub remote: create public `kuhyx/legatus` + push? (not done; outward-facing).
-  Also push `~/src/utils` commit 3f7af48 (file-length exemption) so CI agrees.
+- Design questions: answered, see `DOCS-design.md` "Decisions".
 
 ## Part 4 scope (from DOCS-design-command.md / -army.md)
 
@@ -46,4 +41,3 @@ Headless 100k worst case: tick p50 4.3 ms, p99 6.3 ms (under the 20 % cap).
   fugitives leaving the battle bounds are visible regardless of LOS. Fix then.
 - godot-cpp pin (`godot-4.5-stable`) is NOT checked by the dep-freshness gate
   (it has no submodule support); checked by hand against the tag list 2026-10-10.
-- Original note's "prehistorical blog post (?)" is still unidentified.

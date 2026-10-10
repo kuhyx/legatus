@@ -143,26 +143,20 @@ Conversions (km/h to m/s, miles to km) are mine. Rows labelled [design] or
 | Camps before battle | "just a few miles" apart; days to a month | (Part I, §Offering Battle) |
 | Infantry charge speed | 2.5-3.5 m/s for the last 20-40 m | [design guess] |
 
-## Open questions for kuhy
+## Decisions (kuhy, 2026-10-10)
 
-1. **Symmetric or historical Cannae?** Polybius gives Rome ~86k (6k horse) and
-   Carthage ~50k (10k horse) (Plb. 3.113-114). "2 x 50k" erases that asymmetry.
-   Keep 50k vs 50k, use the real ratio scaled to 100k total, or make it a
-   scenario option?
-2. **Which side does the player command?** Hannibal's plan needed a correct
-   guess about Rome's (Part I, §Seeing the Battle). As Varro the player loses
-   by design. Pick Carthage, Rome, or either?
-3. **How much campaign phase?** Scouting, camps and offering battle over
-   several days (`DOCS-design-prebattle.md`), or start at dawn on battle day
-   with a reports dossier?
-4. **Time scale.** Real time (~1 h of contact plus hours of deployment), or
-   time compression while riding and waiting? If compressed, do couriers
-   compress too?
-5. **Can the general die or be captured?** Paullus died at Cannae (Plb. 3.116).
-   Is that a game-over, or does the army fight on from the plan?
-6. **Roman frontage reading.** Default is 1.8 m open and 0.9 m closed
-   (Plb. 18.30). It changes the line length by 2x. Confirm.
-7. **Loss/disobedience rates** for couriers are pure guesses. Tune them by
-   playtest, or keep them fixed for realism?
-8. **Text reports or voiced couriers?** Arriving reports as text, or as spoken
-   lines (cf. *Radio Commander*, Part I, §Reports)?
+1. **Sizes:** symmetric 50k vs 50k. Polybius' real Cannae (~86k vs ~50k,
+   Plb. 3.113-114) comes later as a historical scenario.
+2. **Player side:** Rome.
+3. **Campaign phase:** none. Start on battle-day morning, armies deployed.
+4. **Time:** real time, with an optional 2-4x speed-up of the whole sim clock
+   (couriers and horse included, so riding speed stays honest relative to the
+   battle).
+5. **General's death:** the battle continues on the officers' last orders and
+   the player watches the outcome.
+6. **Roman frontage:** 1.8 m open by default, closing to 0.9 m on order
+   (Plb. 18.30).
+7. **Courier loss / disobedience:** keep the numbers-table guesses, exposed as
+   settings to tune after playtests.
+8. **Reports:** text.
+9. The "prehistorical blog post" from the original note is dropped.
