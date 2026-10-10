@@ -40,6 +40,7 @@ void BattleSim::_bind_methods() {
 	BIND_CONSTANT(STRIDE);
 	_bind_view_methods();
 	_bind_formation_methods();
+	_bind_setup_methods();
 }
 
 void BattleSim::setup_lines(int32_t p_per_side, float p_frontage, float p_gap, int64_t p_seed) {

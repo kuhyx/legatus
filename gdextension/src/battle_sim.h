@@ -29,6 +29,12 @@ public:
 
 	// Two blocks of n_per_side, `frontage` metres wide, front ranks `gap` apart.
 	void setup_lines(int32_t p_per_side, float p_frontage, float p_gap, int64_t p_seed);
+	// The battle scene's deployment (battle_sim_setup.cpp): per side, lines one
+	// behind the other with `line_gap` m from rear rank to the next front rank;
+	// lines_N holds side N's share of n_per_side per line, front first.
+	void setup_array(int32_t p_per_side, float p_frontage, float p_gap, float p_line_gap,
+			const PackedFloat32Array &p_lines_0, const PackedFloat32Array &p_lines_1,
+			int64_t p_seed);
 	// Arbitrary soldiers for tests: one position and side (0/1) each.
 	void setup_custom(const PackedVector2Array &p_pos, const PackedByteArray &p_sides,
 			int64_t p_seed);
@@ -96,10 +102,13 @@ public:
 	bool is_formation_routed(int32_t p_f) const;
 	// (dead + fled) / start strength.
 	float get_formation_losses(int32_t p_f) const;
-	// Loss fraction at the tick it broke; -1 while it never has.
+	// Loss fraction at the tick it first broke; -1 while it never has.
 	float get_formation_break_losses(int32_t p_f) const;
 	// Living men still on the field.
 	int32_t get_formation_strength(int32_t p_f) const;
+	// XZ box of its living men, now (scans every soldier: not per frame).
+	Rect2 get_formation_bounds(int32_t p_f) const;
+	bool is_formation_rallied(int32_t p_f) const;
 	bool is_formation_engaged(int32_t p_f) const;
 	// Routers who left the sim's box: not alive, not dead, never drawn.
 	int32_t get_fled(int32_t p_side) const;
@@ -156,6 +165,7 @@ private:
 	int32_t fill_side(int32_t p_side, float p_alpha, float p_near2);
 	static void _bind_view_methods();
 	static void _bind_formation_methods();
+	static void _bind_setup_methods();
 	void setup_formations();
 	static void chunk_thunk(void *p_self, uint32_t p_chunk);
 };

@@ -3,8 +3,10 @@ extends RefCounted
 ## The playable battle's world, without nodes: procedural terrain with a
 ## levelled plain for the two armies (generals offered battle on open ground,
 ## DOCS-design-prebattle.md §2), woods kept off it, the 2 x 50k BattleSim
-## standing on that terrain, its sight-tile grid, and the general's start on
-## rising ground behind the Roman line (side 0 deploys towards -Z).
+## standing on that terrain in lines (triplex acies, DOCS-design-command §1),
+## its sight-tile grid, and the general's start on rising ground behind the
+## Roman line (side 0 deploys towards -Z). Every block starts on HOLD: the
+## battle begins when an "advance" reaches it.
 
 const SAMPLES_PER_SIDE: int = 257
 const SAMPLE_SPACING_M: float = 15.625  # 256 cells * 15.625 m = 4 km square
@@ -27,6 +29,18 @@ const START_HALF_WIDTH_M: float = 600.0
 ## Margin above the highest ground for the MultiMesh culling box (a soldier
 ## is ~1.8 m tall).
 const SOLDIER_HEADROOM_M: float = 3.0
+## Front ranks this far apart at the start [design guess]: out of contact,
+## ~2 min of walking, so the first "advance" is a real decision.
+const OPENING_GAP_M: float = 150.0
+## Rear rank of one line to the front rank of the next [design guess].
+const LINE_GAP_M: float = 80.0
+## Share of each side per line, front first. Rome: hastati / principes /
+## triarii at a legion's 1,200 / 1,200 / 600 (Part IIIb). The enemy: two lines.
+const ROMAN_LINES: PackedFloat32Array = [0.4, 0.4, 0.2]
+const ENEMY_LINES: PackedFloat32Array = [0.6, 0.4]
+## A formation whose centre is within this of its side's front rank at the
+## start belongs to the front line (blocks are ~15-25 m deep).
+const FRONT_LINE_DEPTH_M: float = 40.0
 
 var field: HeightField = null
 var woods: Woods = null
@@ -45,7 +59,17 @@ static func build(world_seed: int, per_side: int) -> BattleWorld:
 		world_seed, SAMPLES_PER_SIDE, SAMPLE_SPACING_M, HILL_AMPLITUDE_M
 	)
 	world.sim = BattleSim.new()
-	world.sim.setup_lines(per_side, BenchScenario.FRONTAGE, BenchScenario.GAP, BenchScenario.SEED)
+	world.sim.setup_array(
+		per_side,
+		BenchScenario.FRONTAGE,
+		OPENING_GAP_M,
+		LINE_GAP_M,
+		ROMAN_LINES,
+		ENEMY_LINES,
+		BenchScenario.SEED
+	)
+	for f: int in world.sim.get_formation_count():
+		world.sim.set_formation_order(f, BattleSim.ORDER_HOLD)
 	var bounds: Rect2 = world.sim.get_bounds()
 	world.plain = bounds.grow(PLAIN_MARGIN_M)
 	world.plain_height = world.field.mean_height(world.plain)
@@ -92,7 +116,7 @@ func sight_config() -> Dictionary:
 
 ## World XZ of the highest open sample in the start band behind side 0.
 func start_position() -> Vector2:
-	var front: float = -BenchScenario.GAP * 0.5
+	var front: float = -OPENING_GAP_M * 0.5
 	var best: Vector2 = Vector2(0.0, front - START_BEHIND_M.x)
 	var best_height: float = -INF
 	for z: int in field.resolution:
@@ -109,6 +133,18 @@ func start_position() -> Vector2:
 				best = p
 				best_height = field.get_sample(x, z)
 	return best
+
+
+## Formations of `side`'s front line, from where they stand now (call at the
+## start, before anything moves).
+func front_line(side: int) -> PackedInt32Array:
+	var out: PackedInt32Array = PackedInt32Array()
+	for f: int in sim.get_formation_count():
+		var depth: float = absf(sim.get_formation_center(f).y) - OPENING_GAP_M * 0.5
+		# append() returns true on failure.
+		if sim.get_formation_side(f) == side and depth < FRONT_LINE_DEPTH_M and out.append(f):
+			push_error("BattleWorld: cannot list the front line")
+	return out
 
 
 ## Culling box for the army MultiMeshes: the sim's clamp box, from the lowest

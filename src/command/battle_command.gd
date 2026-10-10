@@ -119,6 +119,12 @@ func send(order: int, view: Transform3D) -> int:
 	if target < 0:
 		_say("no formation in view to send that order to")
 		return -1
+	return send_to(order, target)
+
+
+## Send `order` to formation `target` by courier. Returns `target`, or -1 if
+## no courier was free.
+func send_to(order: int, target: int) -> int:
 	if not service.dispatch(order, target, general_xz()):
 		_say("no courier free")
 		return -1

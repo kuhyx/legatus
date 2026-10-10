@@ -156,6 +156,11 @@ Conversions (km/h to m/s, miles to km) are mine. Rows labelled [design] or
 | A rout seen nearby | once, at the break: friend -0.5, enemy +0.5 cohesion, x (1 - d/150 m) between centroids; enemy still running nearby +0.03/s | [design guess]; (Part IIIc, §Gaming Morale) |
 | A man running alone | only when his own morale < 0.12 and his formation's cohesion < 0.1 | [design guess]; at 0.35 the winners' lone runaways cascaded into routs |
 | Withdraw while engaged | -0.4 cohesion once; may become a rout | [design guess]; (Part II, §Signals and Shouting) |
+| Withdraw distance | walk 150 m to the own rear in good order (no blows), then hold there | [design guess] |
+| Passing through | friends do not push while either is routed or withdrawing (stand-in for the gaps a line opened) | [design guess] |
+| Rally | a routed formation with no unrouted enemy centroid within 60 m for 20 s and an unrouted friend within 150 m re-forms on the spot at cohesion 0.3, on hold, once; a second rout is final | [design guess]; `DOCS-design-army.md` §4 |
+| Battle deployment | front ranks 150 m apart, all on hold; Rome 3 lines 40/40/20 % (hastati / principes / triarii, a legion's 1,200 / 1,200 / 600), enemy 2 lines 60/40 %; 80 m from a line's rear rank to the next line's front rank | [design guess]; the 2:2:1 split follows the maniple sizes (120, triarii 60) in the row above |
+| Enemy plan (placeholder) | front line advances at 60 s, second line holds; orders go straight in (no enemy couriers yet) | [design]; real plan: `DOCS-design-command.md` §1 |
 | Melee lethality | a blow per ~1.4 s fresh (x2 tired), 30 % land, 0.15 % of those kill; light wounds never kill. Measured ~1 %/min of a 34-deep block, ~0.6 %/min tired (a 6-deep block loses ~5x the share) | [design guess], measured with `src/sim/calibrate_morale.gd` |
 | Fatigue | +0.005 per blow, +0.004/s in contact, +0.02/s running, -0.01/s at rest; tired = blows 2x slower, 40 % less likely to land, half speed | [design guess] |
 | Pursuit | against a routed formation 60 % land, 8 % of those kill; routers never strike back | [design guess]; (Part IIIc, §When Does Morale and Cohesion Fail?) |

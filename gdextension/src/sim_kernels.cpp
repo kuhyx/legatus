@@ -1,5 +1,6 @@
 // Phase A of the tick: nearest-enemy search, steering, separation (friends and
-// enemies both push), melee blows. Reads previous-tick buffers only.
+// enemies both push, except friends passing through), melee blows. Reads
+// previous-tick buffers only.
 #include <algorithm>
 #include <cmath>
 
@@ -16,7 +17,8 @@ struct Contact {
 	float push_z = 0.0f;
 };
 
-// Overlap correction from every living soldier in the 3x3 cells around i.
+// Overlap correction from every living soldier in the 3x3 cells around i;
+// friends do not push while either one's formation is passing through.
 Contact separate(const SimState &s, int32_t i, float x, float z) {
 	const SimGrid &g = s.grid;
 	const float min_d = 2.0f * s.params.body_radius;
@@ -26,6 +28,7 @@ Contact separate(const SimState &s, int32_t i, float x, float z) {
 	const int32_t *ids = g.items();
 	const float *ix = g.item_x();
 	const float *iz = g.item_z();
+	const bool passing = s.forms.passing(s.formation[i]);
 	Contact c;
 	for (int32_t gz = std::max(0, cz - 1); gz <= std::min(g.height() - 1, cz + 1); gz++) {
 		for (int32_t gx = std::max(0, cx - 1); gx <= std::min(g.width() - 1, cx + 1); gx++) {
@@ -38,6 +41,10 @@ Contact separate(const SimState &s, int32_t i, float x, float z) {
 				const float d2 = dx * dx + dz * dz;
 				if (d2 >= min_d2 || ids[k] == i) {
 					continue;
+				}
+				const int32_t f = s.formation[ids[k]];
+				if (s.side[ids[k]] == s.side[i] && (passing || s.forms.passing(f))) {
+					continue; // through the own lines' gaps (FormationState::passing)
 				}
 				if (d2 < 1e-8f) { // coincident: split deterministically by index
 					c.push_x += (ids[k] < i ? 0.5f : -0.5f) * min_d;
@@ -72,6 +79,26 @@ void attack(SimState &s, int32_t i, int32_t t) {
 	}
 	// Integer add is commutative: the sum is identical whatever the thread order.
 	__atomic_fetch_add(&s.dmg_in[t], dmg, __ATOMIC_RELAXED);
+}
+
+// Could the ring search find anyone? Only if some enemy formation listed as
+// near (sim_formation.cpp) has its box within the search reach of i.
+bool enemy_in_reach(const SimState &s, int32_t i, float x, float z) {
+	const FormationState &fs = s.forms;
+	const int32_t f = s.formation[i];
+	const int32_t n = fs.near_n[f];
+	if (n > FormationState::NEAR_MAX) {
+		return true;
+	}
+	const float r = fs.search_reach; // per axis, like the search square
+	for (int32_t k = 0; k < n; k++) {
+		const int32_t g = fs.near_ids[size_t(f) * FormationState::NEAR_MAX + size_t(k)];
+		if (fs.lo_x[g] - x <= r && x - fs.hi_x[g] <= r && fs.lo_z[g] - z <= r &&
+				z - fs.hi_z[g] <= r) {
+			return true;
+		}
+	}
+	return false;
 }
 
 } // namespace
@@ -138,7 +165,7 @@ void sim_kernel_move(SimState &s, int32_t p_begin, int32_t p_end) {
 		}
 		int32_t t = s.target[i];
 		if (t < 0 || !s.alive[t] || (s.tick + uint32_t(i)) % uint32_t(p.retarget_period) == 0) {
-			t = sim_find_enemy(s, i);
+			t = enemy_in_reach(s, i, x, z) ? sim_find_enemy(s, i) : -1;
 		}
 		s.target[i] = t;
 		float tdx = 0.0f;

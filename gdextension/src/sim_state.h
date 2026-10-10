@@ -23,12 +23,6 @@ enum SoldierState : uint8_t {
 	ST_FLED = 4, // a router who left the field: alive 0, never drawn, not dead
 };
 
-enum FormationOrder : uint8_t {
-	ORDER_ADVANCE = 0,
-	ORDER_HOLD = 1,
-	ORDER_WITHDRAW = 2,
-};
-
 // Combat constants. Lethality is per landed blow (a rare outright kill on a
 // Poisson clock, otherwise a light wound) so deaths trickle from the first
 // second at ~1 %/min of a deep formation; pursuit multiplies it. The
@@ -77,7 +71,7 @@ struct SimState {
 	// Single-buffered, written only by the owner (or in the damage phase).
 	std::vector<int32_t> hp, dmg_in, target;
 	std::vector<float> fatigue, morale, cooldown, phase, home_x;
-	std::vector<float> anchor_x, anchor_z; // ORDER_HOLD stands here
+	std::vector<float> anchor_x, anchor_z; // HOLD stands here; WITHDRAW walks here
 	std::vector<uint8_t> side, state, alive;
 	std::vector<int32_t> formation;
 
@@ -98,7 +92,12 @@ void sim_formation_pass(SimState &s, int32_t r_fled[2]);
 // Rebuild the formation tables from s.formation (setup / set_formation_ids).
 bool sim_formation_setup(SimState &s);
 // New order for formation f; ignored once it has routed. Returns false then.
+// sim_orders.cpp, with the serial halt / rally step below.
 bool sim_formation_order(SimState &s, int32_t p_f, uint8_t p_order);
+// Serial, end of the formation pass: a withdrawal that reached its goal
+// holds there; a routed formation unpursued long enough, with a friend near,
+// rallies once and re-forms on the spot.
+void sim_orders_pass(SimState &s);
 // Desired velocity, state and facing for soldier i (sim_steer.cpp).
 struct Steer {
 	float vx = 0.0f;

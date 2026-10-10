@@ -14,7 +14,8 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
   Plain `godot --path .` (main scene `scenes/battle/battle.tscn`; user args after
   `--`: `--seconds=N`, `--screenshot=PATH`, `--eye=X,Z`, `--debug`,
   `--order=N` send 0 advance / 1 hold / 2 withdraw at start to the block in
-  view; add `--verbose` for the `couriers:` / `orders:` log)
+  view, `--order-to=F` to block F instead; add `--verbose` for the
+  `couriers:` / `orders:` / `formations:` log)
 - screenshot (off the live display, Forward+): `capped.sh xvfb-run -a -s '-screen 0 640x360x24'
   godot --rendering-driver vulkan --path . scenes/battle/battle.tscn --
   --seconds=4 --render-size=1920x1080 --screenshot=$PWD/.shots/general_view.png`
@@ -59,16 +60,19 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
   `battle_sim_run.cpp` tick, `battle_sim_fill.cpp` MultiMesh fills,
   `battle_sim_view.cpp` + `sim_view.*` the general's view (below),
   `sim_formation.*` + `battle_sim_formation.cpp` formations (below),
-  `sim_steer.cpp` per-order steering.
+  `sim_orders.cpp` orders, withdraw halt, rally, `sim_steer.cpp` per-order
+  steering, `battle_sim_setup.cpp` the battle's lines (`setup_array`).
 - `src/sim/` — GDScript glue: battle setup, MultiMesh rendering.
 - `src/general/` — the player: horse, rider camera, line-of-sight visibility.
 - `src/battle/` — the playable battle: `BattleWorld` (terrain, flattened plain,
-  woods, 2x50k sim, start on rising ground behind side 0), `BattleSight`
-  (time-budgeted sight-tile sweeps), `battle.gd` (scene, HUD).
+  woods, 2x50k sim in lines 150 m apart, all on hold, start on rising ground
+  behind side 0), `BattleSight` (time-budgeted sight-tile sweeps),
+  `FormationLog` (`--verbose` state changes), `battle.gd` (scene, HUD).
 - `src/command/` — orders by courier (DOCS-design-command §3): `CourierService`
   (pool, sim-tick step, seeded RNG) over a `FormationSource` of Callables,
   `CourierSettings` (numbers-table guesses), `OrderPicker`, `OrderInput` (1/2/3),
-  `BattleCommand` (the node in battle.gd: keys -> courier, riders in sight).
+  `BattleCommand` (the node in battle.gd: keys -> courier, riders in sight),
+  `EnemyPlan` (placeholder: the enemy front line advances at 60 s).
 - `src/audio/` — sound (`BattleSound` wires it in battle.gd): `AudioBank`
   (samples; a missing file plays nothing), `RiderAudio` (own hooves on the
   stride clock via `Footfalls`, saddle creak, snorts, wind ~speed^2, M mutes),
@@ -94,8 +98,13 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
 
 ## Formations (morale + order groups)
 
-- Ids are contiguous, side 0 first (`setup_lines`: ~60-file blocks;
+- Ids are contiguous, side 0 first (`setup_lines`: ~60-file blocks, bench and
+  calibration only; `setup_array`: the battle, lines front first;
   `setup_custom`: one per side; `set_formation_ids(ids)` regroups).
+- WITHDRAW walks `withdraw_dist` back, then HOLDs; routed / withdrawing men
+  pass through friends; routers rally once (`is_formation_rallied`). Rows in
+  `DOCS-design.md`. A man searches for enemies only if an enemy block's box
+  is within search reach (`near_ids`): armies apart cost ~2 ms a tick.
 - `get_formation_count/side/center/order/cohesion/losses/break_losses/strength`,
   `is_formation_routed/engaged`, `set_formation_order(f, ORDER_ADVANCE|HOLD|WITHDRAW)`
   (ignored once routed). Serial formation pass after damage (determinism).

@@ -32,6 +32,8 @@ void BattleSim::_bind_formation_methods() {
 			&BattleSim::get_formation_strength);
 	ClassDB::bind_method(D_METHOD("is_formation_engaged", "formation"),
 			&BattleSim::is_formation_engaged);
+	ClassDB::bind_method(D_METHOD("is_formation_rallied", "formation"),
+			&BattleSim::is_formation_rallied);
 	ClassDB::bind_method(D_METHOD("get_fled", "side"), &BattleSim::get_fled);
 	ClassDB::bind_method(D_METHOD("set_formation_ids", "ids"), &BattleSim::set_formation_ids);
 	ClassDB::bind_method(D_METHOD("set_tuning", "values"), &BattleSim::set_tuning);
@@ -83,7 +85,10 @@ std::vector<Knob> knobs(legatus::SimState &s) {
 		{ "rout_shock", &f.rout_shock }, { "rout_relief", &f.rout_relief },
 		{ "withdraw_shock", &f.withdraw_shock }, { "wound_morale", &p.wound_morale },
 		{ "fight_morale", &p.fight_morale }, { "rest_morale", &p.rest_morale },
-		{ "soldier_rout_cohesion", &f.soldier_rout_cohesion } };
+		{ "soldier_rout_cohesion", &f.soldier_rout_cohesion },
+		{ "withdraw_dist", &f.withdraw_dist }, { "rally_enemy_radius", &f.rally_enemy_radius },
+		{ "rally_clear", &f.rally_clear }, { "rally_friend_radius", &f.rally_friend_radius },
+		{ "rally_cohesion", &f.rally_cohesion } };
 }
 } // namespace
 
@@ -160,6 +165,11 @@ int32_t BattleSim::get_formation_strength(int32_t p_f) const {
 bool BattleSim::is_formation_engaged(int32_t p_f) const {
 	ERR_FAIL_INDEX_V(p_f, state.forms.count, false);
 	return state.forms.engaged[p_f] > 0;
+}
+
+bool BattleSim::is_formation_rallied(int32_t p_f) const {
+	ERR_FAIL_INDEX_V(p_f, state.forms.count, false);
+	return state.forms.rallied[p_f] != 0;
 }
 
 int32_t BattleSim::get_fled(int32_t p_side) const {

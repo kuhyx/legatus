@@ -7,8 +7,9 @@ extends Node3D
 ## `--seconds=N` quit after N s (default: never), `--screenshot=PATH` save the
 ## last frame as PNG, `--eye=X,Z` start the general there, not on the vantage,
 ## `--order=N` send order N (0 advance, 1 hold, 2 withdraw) at start to the
-## formation in view, `--debug` show soldier counts on the HUD (a real general
-## has no such readout), `--demo-ride` ride the scripted DemoRide (recordings).
+## formation in view (or to formation F with `--order-to=F`), `--debug` show
+## soldier counts on the HUD (a real general has no such readout),
+## `--demo-ride` ride the scripted DemoRide (recordings).
 
 const MAX_CATCH_UP: int = 3
 const HUD_PERIOD_S: float = 0.25
@@ -21,6 +22,8 @@ var world: BattleWorld = null
 var _sight: BattleSight = null
 var _army: ArmyRenderer = null
 var _command: BattleCommand = null
+var _enemy: EnemyPlan = null
+var _log: FormationLog = null
 var _seconds: float = 0.0
 var _elapsed: float = 0.0
 var _accum: float = 0.0
@@ -53,11 +56,16 @@ func _ready() -> void:
 	_command.name = "Command"
 	add_child(_command)
 	_command.setup(world.sim, world.field, _general, world_seed)
+	_enemy = EnemyPlan.new(world.sim, world.front_line(1))
+	_log = FormationLog.new(world.sim)
 	var sound: BattleSound = BattleSound.new()
 	add_child(sound)
 	sound.setup(world, _general, _command, world_seed)
 	var order: int = BenchScenario.arg("order", "-1").to_int()
-	if order >= 0:
+	var order_to: int = BenchScenario.arg("order-to", "-1").to_int()
+	if order >= 0 and order_to >= 0:
+		print("order %d sent to formation %d" % [order, _command.send_to(order, order_to)])
+	elif order >= 0:
 		print("order %d sent to formation %d" % [order, _command.send(order, _view())])
 	# One synchronous sweep so the first frame is already culled.
 	_sight = BattleSight.new(world.sim)
@@ -110,6 +118,8 @@ func _process(delta: float) -> void:
 	while _accum >= BenchScenario.TICK_DT and steps < MAX_CATCH_UP:
 		world.sim.tick(BenchScenario.TICK_DT)
 		_command.tick(BenchScenario.TICK_DT)
+		_enemy.tick(BenchScenario.TICK_DT)
+		_log.tick(BenchScenario.TICK_DT)
 		_accum -= BenchScenario.TICK_DT
 		steps += 1
 	_accum = minf(_accum, BenchScenario.TICK_DT)

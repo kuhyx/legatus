@@ -48,24 +48,20 @@ Steer sim_steer(SimState &s, int32_t p_index, int32_t p_target, float p_tdx, flo
 		return out;
 	}
 	const uint8_t order = fs.order[f];
-	if (order == ORDER_WITHDRAW) { // back to the own rear in good order, no blows
-		s.state[i] = ST_ADVANCE;
-		out.vx = keep_file(s, i);
-		out.vz = -adv * p.walk_speed * vigour;
-		return out;
-	}
-	if (order == ORDER_HOLD) {
+	if (order != ORDER_ADVANCE) {
 		const float ax = s.anchor_x[i] - s.ox[i];
 		const float az = s.anchor_z[i] - s.oz[i];
 		const float ad = std::sqrt(ax * ax + az * az);
-		// Engage only what comes within charge range, on a leash to the anchor.
-		if (t < 0 || p_dist >= p.charge_dist || ad >= p.charge_dist) {
+		// WITHDRAW: back to the anchor behind, in good order, no blows. HOLD:
+		// engage only what comes within charge range, on a leash to the anchor.
+		if (order == ORDER_WITHDRAW || t < 0 || p_dist >= p.charge_dist || ad >= p.charge_dist) {
+			const bool there = ad <= ANCHOR_SLACK;
 			s.state[i] = ST_ADVANCE;
-			const float k = ad > ANCHOR_SLACK ? std::min(p.walk_speed * vigour, ad) / ad : 0.0f;
+			const float k = there ? 0.0f : std::min(p.walk_speed * vigour, ad) / ad;
 			out.vx = ax * k;
 			out.vz = az * k;
-			out.face_target = t >= 0;
-			out.face_front = true;
+			out.face_target = order == ORDER_HOLD && t >= 0;
+			out.face_front = order == ORDER_HOLD || there;
 			return out;
 		}
 	}
