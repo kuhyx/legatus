@@ -14,3 +14,4 @@ gdextension/src/*.o
 .idea/
 # agent worktrees
 .claude/
+gdextension/.sconsign.dblite

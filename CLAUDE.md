@@ -11,6 +11,8 @@ the numbers table (ACOUP "Total Generalship"); constants come from there.
 
 - run: `godot --path .`
 - build: `scripts/build.sh` (C++ GDExtension -> `bin/`, capped)
+- bench-headless: `scripts/bench_headless.sh` (100k sim tick p50/p99, capped)
+- bench: `scripts/bench.sh` (windowed fps; kuhy runs it, never an agent)
 - test: `scripts/test.sh`
 - test-changed: `scripts/test_changed.sh`
 - lint: `scripts/lint.sh`
