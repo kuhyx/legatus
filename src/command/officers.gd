@@ -3,9 +3,10 @@ extends RefCounted
 ## Officers' obedience (DOCS-design-command.md §3; numbers table "Order
 ## ignored (junior courier, no token)"): each formation's officer has his own
 ## chance of ignoring an order, uniform in [ignore_min, ignore_max], drawn at
-## setup in formation-id order. Every delivered order is then one roll against
-## it, from a stream of its own: seeded by (battle seed, formation, how many
-## orders that officer has had), so one more order elsewhere changes no other
+## setup in formation-id order. Every delivered order that would change
+## something is then one roll against it (BattleCommand.deliver; a no-op takes
+## no roll), from a stream of its own: seeded by (battle seed, formation, how
+## many rolls that officer has had), so one more order elsewhere changes no other
 ## roll (one shared RNG made the battle's first order ignored every time with
 ## the default seed). Couriers are all junior riders without a token for now,
 ## so the chance does not depend on who carries the order. Seeded: a battle

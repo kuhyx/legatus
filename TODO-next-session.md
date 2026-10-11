@@ -83,5 +83,3 @@ window or add a contact scenario.
 
 - Report wording is levels only; DOCS-design-perception §4 also wants
   unit names ("Legio II") once formations have them.
-- An order that changes nothing (hold to a holding block) still rolls the
-  ignore chance and prints IGNORED in the verbose log.

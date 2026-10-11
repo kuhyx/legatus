@@ -5,8 +5,9 @@ extends Node3D
 ## at (OrderPicker). Couriers are stepped on the sim tick and drawn as riders,
 ## each only while the general could see it (same sight test as soldiers).
 ## Engaged formations take only hold or withdraw (DOCS-design-command.md §3):
-## an "advance" reaching a unit already in melee changes nothing. An order
-## that does apply may still be ignored by the officer (Officers). The
+## an "advance" reaching a unit already in melee changes nothing, and neither
+## does the order a unit already follows. An order that does apply may still
+## be ignored by the officer (Officers). The
 ## couriers' returns fill `orders`; the officers' riders bring `reports`.
 
 ## How long the HUD keeps the "courier sent" line, s.
@@ -79,6 +80,12 @@ func draw(eye: Vector3) -> void:
 
 ## The order as the formation's officer receives it.
 func deliver(f: int, order: int) -> void:
+	# The order it already follows: nothing to do, so nothing to roll or set
+	# (re-setting hold would re-anchor the men, withdraw would walk them
+	# further back). A routed block is left to the sim, which ignores it.
+	if order == _sim.get_formation_order(f) and not _sim.is_formation_routed(f):
+		print_verbose("orders: %s to formation %d: no change" % [ORDER_NAMES[order], f])
+		return
 	var engaged: bool = _sim.is_formation_engaged(f)
 	var applies: bool = not (order == OrderInput.ADVANCE and engaged)
 	# Rolled only for an order that would change something.
