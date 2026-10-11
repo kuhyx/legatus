@@ -16,7 +16,8 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
   `--order=N` send 0 advance / 1 hold / 2 withdraw at start to the block in
   view, `--order-to=F` to block F instead, `--order-at=S` at sim second S;
   comma lists send several, e.g. `--order=2,1 --order-to=11,15
-  --order-at=0,200`; add `--verbose` for the `couriers:` / `orders:` /
+  --order-at=0,200`; `--start-at=S` runs the sim headlessly to sim second S
+  before the first frame; add `--verbose` for the `couriers:` / `orders:` /
   `reports:` / `formations:` log)
 - screenshot (off the live display, Forward+, muted: agent runs ALWAYS pass
   `--audio-driver Dummy`, kuhy hears them otherwise): `capped.sh xvfb-run -a -s
@@ -39,6 +40,8 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
 - bench: `scripts/bench.sh --offscreen` (fps gate on the real GPU inside Xvfb,
   capped, nothing on kuhy's screen; agents run THIS). Plain `scripts/bench.sh`
   opens a real window and is kuhy's only. Frames land in `.shots/bench_*.png`.
+  The battle run fast-forwards to `--start-at=170` (fronts meet ~159 s) and
+  fails unless a formation is engaged on every tick of the timed window.
 - test: `scripts/test.sh`
 - test-changed: `scripts/test_changed.sh`
 - lint: `scripts/lint.sh`
@@ -72,7 +75,8 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
 - `src/battle/` — the playable battle: `BattleWorld` (terrain, flattened plain,
   woods, 2x50k sim in lines 150 m apart, all on hold, start on rising ground
   behind side 0), `BattleSight` (time-budgeted sight-tile sweeps),
-  `FormationLog` (`--verbose` state changes), `battle.gd` (scene, HUD).
+  `FormationLog` (`--verbose` state changes), `ContactProbe` (engaged
+  formations in a timed run, the bench's contact gate), `battle.gd` (scene, HUD).
 - `src/command/` — orders by courier (DOCS-design-command §3): `CourierService`
   (pool, sim-tick step, seeded RNG) over a `FormationSource` of Callables,
   `CourierSettings` (numbers-table guesses), `OrderPicker`, `OrderInput` (1/2/3),

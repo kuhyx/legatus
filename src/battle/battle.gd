@@ -10,7 +10,9 @@ extends Node3D
 ## formation in view (or to formation F with `--order-to=F`; at sim second S
 ## with `--order-at=S`, default 0; comma lists send several), `--debug` show
 ## soldier counts on the HUD (a real general has no such readout),
-## `--demo-ride` ride the scripted DemoRide (recordings).
+## `--demo-ride` ride the scripted DemoRide (recordings), `--start-at=S` run
+## the sim headlessly to sim second S before the first frame (the fps gate
+## times the melee, not the march; a timed run also prints the `contact` line).
 
 const MAX_CATCH_UP: int = 3
 const HUD_PERIOD_S: float = 0.25
@@ -36,6 +38,7 @@ var _hud_timer: float = 0.0
 var _debug_hud: bool = false
 var _frame_ms: SimStats = SimStats.new()
 var _probe: RenderProbe = RenderProbe.new()
+var _contact: ContactProbe = ContactProbe.new()
 
 @onready var _general: General = $General
 @onready var _hud: Label = $Hud/Status
@@ -68,6 +71,7 @@ func _ready() -> void:
 	sound.setup(world, _general, _command, world_seed)
 	_orders = BenchScenario.arg("order", "").split(",", false)
 	_send_order_due()
+	_fast_forward(BenchScenario.arg("start-at", "0").to_float())
 	# One synchronous sweep so the first frame is already culled.
 	_sight = BattleSight.new(world.sim)
 	var tiles: int = _sight.full_sweep(_general.eye_position())
@@ -120,6 +124,28 @@ func _send_order_due() -> void:
 		print("order %d sent to formation %d at %.1f s" % [order, sent, _sim_s])
 
 
+## One fixed sim tick of the battle: sim, couriers, enemy plan, log, orders due.
+func _tick() -> void:
+	world.sim.tick(BenchScenario.TICK_DT)
+	_command.tick(BenchScenario.TICK_DT)
+	_enemy.tick(BenchScenario.TICK_DT)
+	_log.tick(BenchScenario.TICK_DT)
+	_sim_s += BenchScenario.TICK_DT
+	_send_order_due()
+
+
+## `--start-at=S`: the same ticks as a live run, back to back before the
+## first frame, so the battle at S is the battle a player would reach at S.
+func _fast_forward(to_s: float) -> void:
+	if to_s <= 0.0:
+		return
+	var started: int = Time.get_ticks_msec()
+	for _i: int in roundi(to_s / BenchScenario.TICK_DT):
+		_tick()
+	var took: float = (Time.get_ticks_msec() - started) / 1000.0
+	print("battle fast-forward: sim %.1f s in %.1f s" % [_sim_s, took])
+
+
 func _place_general(at: Vector2) -> void:
 	_general.position = Vector3(at.x, world.field.height_at(at.x, at.y) + 0.2, at.y)
 	_general.motion.heading = PI
@@ -134,12 +160,9 @@ func _process(delta: float) -> void:
 	_accum += delta
 	var steps: int = 0
 	while _accum >= BenchScenario.TICK_DT and steps < MAX_CATCH_UP:
-		world.sim.tick(BenchScenario.TICK_DT)
-		_command.tick(BenchScenario.TICK_DT)
-		_enemy.tick(BenchScenario.TICK_DT)
-		_log.tick(BenchScenario.TICK_DT)
-		_sim_s += BenchScenario.TICK_DT
-		_send_order_due()
+		_tick()
+		if _seconds > 0.0 and _elapsed > WARMUP_SEC:
+			_contact.sample(world.sim)
 		_accum -= BenchScenario.TICK_DT
 		steps += 1
 	_accum = minf(_accum, BenchScenario.TICK_DT)
@@ -154,6 +177,7 @@ func _process(delta: float) -> void:
 		_report("end")
 		print(_frame_ms.summary("frame_ms"))
 		print(_probe.summary())
+		print(_contact.summary())
 		_save_screenshot(BenchScenario.arg("screenshot", ""))
 		get_tree().quit()
 
