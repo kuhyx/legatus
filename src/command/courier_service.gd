@@ -30,7 +30,10 @@ var source: FormationSource = null
 var couriers: Array[Courier] = []
 ## Debug trail of what happened to orders (never shown to the player).
 var history: PackedStringArray = PackedStringArray()
-var delivered_count: int = 0
+## Orders handed over to a formation that had not routed. Not "obeyed":
+## BattleCommand.deliver may still find it a no-op, drop an "advance" for an
+## engaged block, or the officer may ignore it.
+var handed_over_count: int = 0
 var dropped_count: int = 0
 var lost_count: int = 0
 ## Ticket of the latest successful dispatch (-1 before the first one).
@@ -118,7 +121,7 @@ func _hand_over(courier: Courier) -> void:
 		_note("order %d to formation %d lost: it has routed" % [courier.order, courier.formation])
 		order_dropped.emit(courier.formation, courier.order)
 		return
-	delivered_count += 1
+	handed_over_count += 1
 	source.deliver_order(courier.formation, courier.order)
 	_note("order %d delivered to formation %d" % [courier.order, courier.formation])
 	order_delivered.emit(courier.formation, courier.order)

@@ -47,6 +47,7 @@ func test_order_arrives_after_ride_time_plus_handoff() -> void:
 	_run(service, 4)
 	assert_eq(fake.deliveries, [Vector2i(0, OrderInput.HOLD)] as Array[Vector2i])
 	assert_eq(service.couriers[0].state, Courier.State.RETURNING)
+	assert_eq(service.handed_over_count, 1)
 
 
 func test_courier_chases_a_moving_formation() -> void:
@@ -119,6 +120,7 @@ func test_routed_target_gets_no_order() -> void:
 	_run(service, _expected_ticks(settings) + 2)
 	assert_eq(fake.deliveries.size(), 0, "a routed unit obeys nobody")
 	assert_eq(service.dropped_count, 1)
+	assert_eq(service.handed_over_count, 0, "nothing handed over")
 	assert_eq(service.couriers[0].state, Courier.State.RETURNING, "the rider still rides back")
 
 

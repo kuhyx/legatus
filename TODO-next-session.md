@@ -47,8 +47,6 @@ window or add a contact scenario.
   next calibration session runs seeds 6-20 to tell bias from seed luck.
 - Start view: the whole army is in sight from the start hill (kept, kuhy
   2026-10-10; test_start_view_is_within_the_battle).
-- Debug only: `CourierService.delivered_count` counts an "advance" that
-  BattleCommand.deliver drops for an engaged block.
 
 ## Known gaps carried over
 
