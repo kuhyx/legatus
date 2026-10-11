@@ -42,7 +42,7 @@ struct SimParams {
 	float hit_chance = 0.3f; // a blow lands (most land on shield or armour)
 	float kill_chance = 0.0015f; // a landed blow kills outright
 	float pursuit_hit_chance = 0.6f; // against a man who has turned his back
-	float pursuit_kill_chance = 0.08f;
+	float pursuit_kill_chance = 0.06f;
 	int32_t max_hp = 1000;
 	int32_t dmg_min = 5; // light wound, hp
 	int32_t dmg_max = 25;

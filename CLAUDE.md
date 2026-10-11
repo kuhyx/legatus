@@ -13,6 +13,7 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
   `godot --path . -- ARGS`; opens a window: kuhy's only, agents use xvfb-run).
   Plain `godot --path .` (main scene `scenes/battle/battle.tscn`; user args after
   `--`: `--seconds=N`, `--screenshot=PATH`, `--eye=X,Z`, `--debug`,
+  `--speed=N` debug: sim N x real time (<= 16),
   `--order=N` send 0 advance / 1 hold / 2 withdraw at start to the block in
   view, `--order-to=F` to block F instead, `--order-at=S` at sim second S;
   comma lists send several, e.g. `--order=2,1 --order-to=11,15
@@ -26,9 +27,11 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
   --seconds=4 --render-size=1920x1080 --screenshot=$PWD/.shots/general_view.png`
   (a bigger window costs ~50 ms a frame in Xvfb copies: no timings from it)
   (`.shots/` is ignored)
-- calibrate morale: `capped.sh godot --headless --audio-driver Dummy --path .
-  -s res://src/sim/calibrate_morale.gd -- --minutes=15 [--tune=k:v,...]`
-  (losses at break / final per side vs the DOCS-design-army §4 targets)
+- calibrate morale: `scripts/calibrate.sh --quick [--tune=k:v,...]` (seed 6,
+  full 2x50k, ~50 s; gates loser 14-16 / winner 4-5 % killed, break <= 10 %
+  vs DOCS-design-army §4). Without `--quick`: seeds 1-20, ~15 min, kuhy only.
+  One seed raw: `capped.sh godot --headless --audio-driver Dummy --path .
+  -s res://src/sim/calibrate_morale.gd -- --seed=6 [--tune=k:v,...]`
 - build: `scripts/build.sh` (C++ GDExtension -> `bin/`, capped)
 - sounds: `scripts/fetch_audio.sh` (CC0 samples -> ignored `assets/audio/`,
   sha256-pinned in the tracked `assets/audio/sources.tsv`; install.sh runs it)

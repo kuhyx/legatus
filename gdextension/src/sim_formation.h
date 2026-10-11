@@ -18,9 +18,9 @@ enum FormationOrder : uint8_t {
 
 // [design guess] cohesion constants; the rows live in DOCS-design.md.
 struct FormationParams {
-	float break_min = 0.04f; // loss fraction a formation can take, sampled per formation
+	float break_min = 0.075f; // loss fraction a formation can take, sampled per formation
 	float break_max = 0.10f; // "at or before 10 % losses" (Part IIIc)
-	float engaged_stress = 0.0015f; // cohesion lost per second of line contact
+	float engaged_stress = 0.0008f; // cohesion lost per second of line contact
 	float engaged_full = 0.02f; // engaged share of the living for full contact stress
 	float recover = 0.004f; // stress shed per second out of contact
 	float contagion = 0.0f; // per second, a routing friend at distance 0 (off: see DOCS)

@@ -1,8 +1,9 @@
 extends SceneTree
 ## Morale calibration: the bench battle (2 x 50k, BenchScenario) run unpaced
-## until one side has broken and the pursuit is over, against the historical
-## targets (DOCS-design-army §4): units break at or before 10 % losses,
-## winners lose ~4-5 % killed, losers ~14-16 %.
+## until one side has broken and the pursuit is over (no melee, no router
+## left on the field), against the historical targets (DOCS-design-army §4):
+## units break at or before 10 % losses, winners lose ~4-5 % killed, losers
+## ~14-16 %. scripts/calibrate.sh runs it over seeds and gates the medians.
 ## Run: capped.sh godot --headless --audio-driver Dummy --path .
 ##   -s res://src/sim/calibrate_morale.gd -- [--minutes=30] [--per-side=50000]
 ##   [--frontage=1500] [--gap=6] [--seed=42] [--every=1200 ticks]
@@ -12,8 +13,6 @@ extends SceneTree
 
 const TICK_DT: float = BenchScenario.TICK_DT
 const TICKS_PER_MINUTE: int = 1200
-## Game minutes of pursuit after the last break before stopping.
-const PURSUIT_MINUTES: int = 3
 
 var _sim: BattleSim
 ## Ticks between progress lines (`--every=N`, default one game minute).
@@ -62,13 +61,8 @@ func _tuning(spec: String) -> Dictionary:
 
 func _run(max_ticks: int) -> void:
 	var last_break: int = -1
-	var last_contact: int = 0
 	for tick: int in max_ticks:
 		_sim.tick(TICK_DT)
-		for f: int in _sim.get_formation_count():
-			if _sim.is_formation_engaged(f):
-				last_contact = tick
-				break
 		for f: int in _sim.get_formation_count():
 			if _break_tick[f] < 0 and _sim.is_formation_routed(f):
 				_break_tick[f] = tick
@@ -79,15 +73,21 @@ func _run(max_ticks: int) -> void:
 					_dead_at_first_break[side] = _dead(side)
 		if tick % _every == _every - 1:
 			_print_minute(tick + 1)
-		var quiet: int = PURSUIT_MINUTES * TICKS_PER_MINUTE
-		if last_break >= 0 and tick - last_break >= quiet and tick - last_contact >= quiet:
-			print(
-				(
-					"stopped at %.0fs: no break and no contact for %d min"
-					% [tick * TICK_DT, PURSUIT_MINUTES]
-				)
-			)
+		if last_break >= 0 and _settled():
+			print("stopped at %.0fs: no melee and no router left on the field" % (tick * TICK_DT))
 			return
+
+
+## Nothing left to change the count: no formation in melee and every routed
+## one dead or fled (pursuers hitting routers are not "engaged", so contact
+## alone would cut the pursuit short; a rallied block is unrouted and fights).
+func _settled() -> bool:
+	for f: int in _sim.get_formation_count():
+		if _sim.is_formation_engaged(f):
+			return false
+		if _sim.is_formation_routed(f) and _sim.get_formation_strength(f) > 0:
+			return false
+	return true
 
 
 ## Men of formation f killed or fled so far.
@@ -131,6 +131,9 @@ func _print_minute(tick: int) -> void:
 
 
 func _report() -> void:
+	var broken: PackedInt32Array = PackedInt32Array([0, 0])
+	var killed: PackedFloat64Array = PackedFloat64Array([0.0, 0.0])
+	var median: PackedFloat64Array = PackedFloat64Array([0.0, 0.0])
 	for side: int in 2:
 		var breaks: Array[float] = []
 		var lost_by_break: int = 0
@@ -143,6 +146,11 @@ func _report() -> void:
 			lost_final += _lost(f)
 		breaks.sort()
 		var total: float = _sim.get_side_count(side)
+		broken[side] = breaks.size()
+		killed[side] = 100.0 * _dead(side) / total
+		median[side] = (
+			100.0 * breaks[roundi(0.5 * (breaks.size() - 1))] if not breaks.is_empty() else 0.0
+		)
 		print(
 			(
 				"side %d: broken %d | break losses min %s median %s max %s | killed %.2f%% fled %.2f%%"
@@ -172,6 +180,24 @@ func _report() -> void:
 				]
 			)
 		)
+
+	_result(broken, killed, median)
+
+
+## The one line scripts/calibrate.sh reads: the loser is the side with more
+## broken formations (on a tie, more killed).
+func _result(
+	broken: PackedInt32Array, killed: PackedFloat64Array, median: PackedFloat64Array
+) -> void:
+	var loser: int = 0 if broken[0] > broken[1] else 1
+	if broken[0] == broken[1]:
+		loser = 0 if killed[0] >= killed[1] else 1
+	print(
+		(
+			"result loser=%d loser_killed=%.2f winner_killed=%.2f loser_break_median=%.2f"
+			% [loser, killed[loser], killed[1 - loser], median[loser]]
+		)
+	)
 
 
 func _pct(sorted: Array[float], p: float) -> String:

@@ -188,6 +188,14 @@ without the mark are sourced.
   blocks) lost 15.9 % killed, 6.8 k of 7.9 k after its first break, and 77.5 %
   fled. The other broke 6/25 blocks: 4.5 % killed at 8 min, 6.8 % at the cap
   (one pair still in contact). No block has yet routed with zero losses.
+  **Sim, 2026-10-11** (`scripts/calibrate.sh`): with the old constants, 20
+  seeds were all-or-nothing, losers 17.1 % / winners 3.6 % (mean). The weakest
+  block broke at ~2.5 % losses and the rout shock took the rest of the line
+  with it. Raising the break floor to 7.5 %, contact stress to 0.0008/s and
+  pursuit kill to 6 % lengthens the melee. Seed 6 now gives losers 14.4 % /
+  winners 4.5 % / breaks at a median 4.3 %. Over 20 seeds the pursuit-6.5 %
+  variant gave 16.0 / 4.3 / 4.4 (medians), and the winners broke 4-14 blocks
+  instead of 2-3. 6 % has not been run over 20 seeds.
 - **Claim:** Extreme casualties come from special circumstances: the army
   cannot retreat. Romans pursued better than hoplites did (Part IIIc, §When
   Does Morale and Cohesion Fail?). At Cannae, ~70,000 of ~86,000 Romans died
