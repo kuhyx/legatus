@@ -12,9 +12,12 @@ extends Node3D
 ## soldier counts on the HUD (a real general has no such readout),
 ## `--demo-ride` ride the scripted DemoRide (recordings), `--start-at=S` run
 ## the sim headlessly to sim second S before the first frame (the fps gate
-## times the melee, not the march; a timed run also prints the `contact` line).
+## times the melee, not the march; a timed run also prints the `contact` line),
+## `--speed=N` debug: the sim runs N x real time (up to MAX_SPEED; as fast as
+## the ticks allow beyond what a frame can fit).
 
 const MAX_CATCH_UP: int = 3
+const MAX_SPEED: float = 16.0
 const HUD_PERIOD_S: float = 0.25
 ## Frames in the first second (loading, first sweep) are not counted.
 const WARMUP_SEC: float = 1.0
@@ -28,6 +31,8 @@ var _command: BattleCommand = null
 var _enemy: EnemyPlan = null
 var _log: FormationLog = null
 var _seconds: float = 0.0
+## Sim seconds per real second (`--speed`, debug).
+var _speed: float = 1.0
 ## Sim seconds so far; the `--order` list and the next one not yet sent.
 var _sim_s: float = 0.0
 var _orders: PackedStringArray = PackedStringArray()
@@ -46,6 +51,7 @@ var _contact: ContactProbe = ContactProbe.new()
 
 func _ready() -> void:
 	_seconds = BenchScenario.arg("seconds", "0").to_float()
+	_speed = clampf(BenchScenario.arg("speed", "1").to_float(), 0.1, MAX_SPEED)
 	BenchScenario.apply_render_size(get_tree().root)
 	_probe.watch(get_viewport())
 	_debug_hud = BenchScenario.arg("debug", "false") == "true"
@@ -157,9 +163,9 @@ func _process(delta: float) -> void:
 	_probe.sample(_elapsed > WARMUP_SEC)
 	if _elapsed > WARMUP_SEC:
 		_frame_ms.add(delta * 1000.0)
-	_accum += delta
+	_accum += delta * _speed
 	var steps: int = 0
-	while _accum >= BenchScenario.TICK_DT and steps < MAX_CATCH_UP:
+	while _accum >= BenchScenario.TICK_DT and steps < MAX_CATCH_UP * ceili(_speed):
 		_tick()
 		if _seconds > 0.0 and _elapsed > WARMUP_SEC:
 			_contact.sample(world.sim)
