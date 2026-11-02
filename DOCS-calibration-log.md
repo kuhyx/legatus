@@ -1,6 +1,5 @@
-# TODO: after Part 5b — enemy plan, signals, initiative, calibration
+# Legatus battle calibration log and Part 5a/5b record
 
-REMOVE ME AFTER FINISH
 
 State at hand-off (2026-10-11): Parts 5a and 5b pushed; the contact fps
 gate, the no-op order skip and the `handed_over_count` rename are committed
@@ -37,14 +36,6 @@ all 25 side-0 blocks routed together near 240 s). Mean losers / winners
   that was NOT the side-0 bias (below).
 - `--order-to=F`, `--verbose` `formations:` log.
 
-## Later
-
-- Enemy AI with its own pre-battle plan (plan dominance, Part II), its own
-  couriers; replaces `EnemyPlan`.
-- Signals (trumpets/standards) with limited reach (DOCS-design-command §2).
-- Officer initiative (Part IIIb): in-extremis moves, pursuit impulse.
-- Order picker picks by bearing only: from behind, all three Roman lines
-  are "in view" at once; a reserve block is addressable only from the flank.
 - Calibration, 5 seeds (`calibrate_morale.gd --minutes=15 --seed=1..5`),
   losers / winners killed %: main 13.5/10.2, 16.2/2.4, 16.9/2.8, 16.6/2.7,
   11.6/9.7; Part 5a 13.5/11.0, 16.8/2.4, 17.4/2.8, 17.4/2.7, 12.0/11.4
