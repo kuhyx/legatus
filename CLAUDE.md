@@ -30,6 +30,9 @@ hold the sourced mechanics, kuhy's decisions and the numbers table (ACOUP "Total
 - calibrate morale: `scripts/calibrate.sh --quick [--tune=k:v,...]` (seed 6,
   full 2x50k, ~50 s; gates loser 14-16 / winner 4-5 % killed, break <= 10 %
   vs DOCS-design-army §4). Without `--quick`: seeds 1-20, ~15 min, kuhy only.
+  `--five`: regression test, seeds 1-5 each in band, ~15 min, kuhy only
+  (`tests/integration/test_calibration_5seed.gd`, skipped unless
+  `LEGATUS_CALIB=1`; agents: `LEGATUS_CALIB_SEEDS=1-2 LEGATUS_CALIB_MINUTES=1`).
   One seed raw: `capped.sh godot --headless --audio-driver Dummy --path .
   -s res://src/sim/calibrate_morale.gd -- --seed=6 [--tune=k:v,...]`
 - build: `scripts/build.sh` (C++ GDExtension -> `bin/`, capped)

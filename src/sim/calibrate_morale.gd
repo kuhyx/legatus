@@ -138,13 +138,16 @@ func _report() -> void:
 		var breaks: Array[float] = []
 		var lost_by_break: int = 0
 		var lost_final: int = 0
+		var times: Array[float] = []
 		for f: int in _sim.get_formation_count():
 			if _sim.get_formation_side(f) != side or _break_tick[f] < 0:
 				continue
 			breaks.append(_sim.get_formation_break_losses(f))
+			times.append(_break_tick[f] * TICK_DT)
 			lost_by_break += _lost_at_break[f]
 			lost_final += _lost(f)
 		breaks.sort()
+		times.sort()
 		var total: float = _sim.get_side_count(side)
 		broken[side] = breaks.size()
 		killed[side] = 100.0 * _dead(side) / total
@@ -169,12 +172,14 @@ func _report() -> void:
 		print(
 			(
 				(
-					"  killed before the side's first break %s, after %s"
+					"  killed before the side's first break %s, after %s | breaks at %s-%s s"
 					+ " | routed formations lost %d by their breaks, %d by the end"
 				)
 				% [
 					str(first) if first >= 0 else "-",
 					str(_dead(side) - first) if first >= 0 else "-",
+					"%.0f" % times[0] if not times.is_empty() else "-",
+					"%.0f" % times[-1] if not times.is_empty() else "-",
 					lost_by_break,
 					lost_final,
 				]

@@ -5,8 +5,10 @@
 # killed 4-5 %, the loser's median break losses <= 10 %.
 #   --quick   one seed (6, close to the 20-seed medians), ~50 s: every tweak.
 #   default   seeds 1-20, ~15 min: the acceptance run once a tuning is done.
+#   --five    the regression test (tests/integration/test_calibration_5seed.gd):
+#             seeds 1-5, 15 min each, EVERY seed in the bands, not the median.
 # Jobs split capped.sh's 50 % ceiling between them. Not in pre-commit.
-# Usage: scripts/calibrate.sh [--quick] [--seeds=1-20] [--jobs=4]
+# Usage: scripts/calibrate.sh [--quick|--five] [--seeds=1-20] [--jobs=4]
 #        [--minutes=15] [--tune=k:v,...] [--out=DIR]
 # Exit: 0 in the bands, 1 outside, 2 a run gave no result line.
 
@@ -21,6 +23,7 @@ SEEDS="1-20"
 JOBS=4
 MINUTES=15
 TUNE=""
+FIVE=0
 OUT="$REPO_ROOT/.shots/calibrate"
 
 parse_args() {
@@ -28,6 +31,7 @@ parse_args() {
     for arg in "$@"; do
         case "$arg" in
             --quick) SEEDS="6-6"; JOBS=1 ;;
+            --five) FIVE=1 ;;
             --seeds=*) SEEDS="${arg#--seeds=}" ;;
             --jobs=*) JOBS="${arg#--jobs=}" ;;
             --minutes=*) MINUTES="${arg#--minutes=}" ;;
@@ -87,8 +91,20 @@ check() {
     echo "calibrate: ok $label median $value % in $low-$high %"
 }
 
+# The 5-seed GUT regression test; GUT exits non-zero on a seed out of band.
+run_five() {
+    CAP_CPU_PCT="${CAP_CPU_PCT:-50}" CAP_MEM="${CAP_MEM:-8G}" LEGATUS_CALIB=1 LEGATUS_CALIB_TUNE="$TUNE" \
+        timeout --kill-after=10 "$RUN_TIMEOUT_S" "$CAPPED" godot --headless --audio-driver Dummy \
+        --path "$REPO_ROOT" -s addons/gut/gut_cmdln.gd \
+        -gtest=res://tests/integration/test_calibration_5seed.gd -gexit
+}
+
 main() {
     parse_args "$@"
+    if ((FIVE)); then
+        run_five
+        exit
+    fi
     mkdir -p "$OUT"
     rm -f "$OUT"/seed_*.log
     local first="${BASH_REMATCH[1]}" last="${BASH_REMATCH[2]}"

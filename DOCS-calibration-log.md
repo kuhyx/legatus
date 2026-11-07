@@ -22,6 +22,11 @@ all 25 side-0 blocks routed together near 240 s). Mean losers / winners
 11/7.2, 16 3/2.7|25/17.4, 17 3/2.7|25/17.3, 18 25/17.8|2/2.6, 19 2/2.6|
 25/17.6, 20 19/14.8|10/9.2.
 
+Regression gate (2026-11-06): `scripts/calibrate.sh --five` runs
+`tests/integration/test_calibration_5seed.gd` (seeds 1-5, 15 min, every
+seed in band, failures name the seed). Red today: seeds 1-5 are outside
+(Part 5a numbers, below). Green is the done check for the cascade fix.
+
 ## Done in Part 5a
 
 - Battle deployment (`setup_array`, `BattleWorld`): fronts 150 m apart, all
